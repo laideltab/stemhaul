@@ -7,7 +7,7 @@ const plex = IBM_Plex_Sans({ variable: "--font-plex", subsets: ["latin"], weight
 const plexMono = IBM_Plex_Mono({ variable: "--font-plex-mono", subsets: ["latin"], weight: ["400", "500"] });
 
 export const metadata: Metadata = {
-  title: "Stemhaul (demo)",
+  title: "Stem Haul (demo)",
   description: "Wholesale flower logistics and florist point of sale. Demo with fake data.",
 };
 

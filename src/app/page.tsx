@@ -33,7 +33,7 @@ export default function DemoSignIn() {
         <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
           <div className="flex items-center gap-2">
             <div className="grid size-9 place-items-center rounded-lg bg-sidebar-active"><Flower2 size={20} className="text-white" /></div>
-            <span className="font-display text-2xl font-semibold text-white">Stemhaul</span>
+            <span className="font-display text-2xl font-semibold text-white">Stem Haul</span>
             <span className="ml-2 rounded-full bg-white/10 px-2 py-0.5 text-xs">Demo · fake data</span>
           </div>
           <h1 className="mt-6 max-w-2xl font-display text-3xl font-semibold leading-tight text-white sm:text-4xl">
@@ -78,7 +78,7 @@ export default function DemoSignIn() {
         >
           <ShieldCheck className="text-brand" size={20} />
           <div>
-            <div className="font-medium">Stemhaul platform owner</div>
+            <div className="font-medium">Stem Haul platform owner</div>
             <div className="text-sm text-muted">License Admin: every licensed account, its modules and billing status.</div>
           </div>
         </button>

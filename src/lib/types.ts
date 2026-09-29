@@ -48,7 +48,7 @@ export interface Contact {
   kind: "farm" | "vendor" | "agency" | "customer";
   name: string;
   country: string;
-  /** When this contact is itself a Stemhaul account (e.g. a licensed florist). */
+  /** When this contact is itself a Stem Haul account (e.g. a licensed florist). */
   linkedOrgId?: string;
   terms?: string;
   /** Customer code (also the mark code printed on each box). */

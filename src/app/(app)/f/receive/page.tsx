@@ -30,7 +30,7 @@ export default function ReceiveBoxes() {
 
   return (
     <>
-      <PageHeader title="Receive Boxes" sub="Boxes delivered by a wholesaler on Stemhaul arrive already loaded: just scan them. Purchases from other Miami suppliers are entered by hand." />
+      <PageHeader title="Receive Boxes" sub="Boxes delivered by a wholesaler on Stem Haul arrive already loaded: just scan them. Purchases from other Miami suppliers are entered by hand." />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader title="From Lucy's Flowers" sub={`${incoming.length} boxes on the way to your shop`} />
@@ -62,7 +62,7 @@ export default function ReceiveBoxes() {
         </Card>
 
         <Card>
-          <CardHeader title="Other supplier (manual)" sub="Bought at a Miami market or another wholesaler not on Stemhaul" />
+          <CardHeader title="Other supplier (manual)" sub="Bought at a Miami market or another wholesaler not on Stem Haul" />
           <div className="grid gap-3 p-4">
             <Field label="Supplier">
               <select className={inputCls} value={supplier} onChange={(e) => setSupplier(e.target.value)}>

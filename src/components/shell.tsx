@@ -65,7 +65,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const user = users.find((u) => u.id === session.userId);
 
   const sections: { title: string; items: NavItem[] }[] = [];
-  if (isAdmin) sections.push({ title: "Stemhaul", items: adminNav });
+  if (isAdmin) sections.push({ title: "Stem Haul", items: adminNav });
   else if (org?.kind === "farm") sections.push({ title: "Farm portal", items: farmNav });
   else {
     if (org?.modules.includes("wholesale")) sections.push({ title: "Wholesale", items: wholesaleNav });
@@ -79,7 +79,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex items-center gap-2 px-5 py-5">
         <div className="grid size-8 place-items-center rounded-lg bg-sidebar-active"><Flower2 size={18} className="text-white" /></div>
         <div>
-          <div className="font-display text-lg font-semibold leading-none text-white">Stemhaul</div>
+          <div className="font-display text-lg font-semibold leading-none text-white">Stem Haul</div>
           <div className="text-[11px] uppercase tracking-wider text-sidebar-fg/70">Demo</div>
         </div>
       </div>
@@ -145,7 +145,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="min-w-0 flex-1">
         <div className="no-print sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-bg/90 px-4 py-2.5 backdrop-blur lg:hidden">
           <button onClick={() => setOpen(true)} aria-label="Open menu" className="rounded-lg p-1.5 hover:bg-surface-2"><Menu size={20} /></button>
-          <span className="font-display font-semibold">Stemhaul</span>
+          <span className="font-display font-semibold">Stem Haul</span>
           <span className="truncate text-sm text-muted">{isAdmin ? "License Admin" : org?.name}</span>
         </div>
         <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>

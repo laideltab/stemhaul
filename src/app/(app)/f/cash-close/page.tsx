@@ -67,7 +67,7 @@ export default function CashClose() {
 
   return (
     <>
-      <PageHeader title="Cash Close" sub="Each cashier counts their own drawer. Stemhaul compares it against what they sold in cash." />
+      <PageHeader title="Cash Close" sub="Each cashier counts their own drawer. Stem Haul compares it against what they sold in cash." />
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Open drawers" value={open.length} />
         <Stat label="Closed shifts" value={closed.length} sub="Last 7 days" />

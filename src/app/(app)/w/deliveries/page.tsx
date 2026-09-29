@@ -40,7 +40,7 @@ export default function Deliveries() {
     const p: Record<string, number> = {};
     for (const b of selected) p[b.productId] = price(b.productId);
     s.deliverBoxes(customerId, sel, p);
-    setMsg({ ok: true, message: `Delivered ${sel.length} boxes to ${cust?.name}. Invoice created${cust?.linkedOrgId ? "; the boxes now show up in their Stemhaul receiving." : "."}` });
+    setMsg({ ok: true, message: `Delivered ${sel.length} boxes to ${cust?.name}. Invoice created${cust?.linkedOrgId ? "; the boxes now show up in their Stem Haul receiving." : "."}` });
     setSel([]);
   };
 
@@ -53,7 +53,7 @@ export default function Deliveries() {
           <div className="flex flex-wrap items-end gap-3">
             <Field label="Customer" className="min-w-64">
               <select className={inputCls} value={customerId} onChange={(e) => { setCustomerId(e.target.value); setSel(presoldFor(e.target.value)); setMsg(null); }}>
-                {customers.map((c) => <option key={c.id} value={c.id}>{c.code} · {c.name}{c.linkedOrgId ? " (on Stemhaul)" : ""}</option>)}
+                {customers.map((c) => <option key={c.id} value={c.id}>{c.code} · {c.name}{c.linkedOrgId ? " (on Stem Haul)" : ""}</option>)}
               </select>
             </Field>
             {cust?.linkedOrgId && <Badge tone="brand">Boxes will appear in {cust.name}&apos;s Receive Boxes</Badge>}

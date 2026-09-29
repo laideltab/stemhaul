@@ -11,7 +11,7 @@ export default function LicenseAdmin() {
 
   return (
     <>
-      <PageHeader title="License Admin" sub="Every business on Stemhaul. Only the platform owner sees this. Plan prices are not set yet." />
+      <PageHeader title="License Admin" sub="Every business on Stem Haul. Only the platform owner sees this. Plan prices are not set yet." />
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Licensed accounts" value={licensed.length} />
         <Stat label="Wholesale module" value={licensed.filter((o) => o.modules.includes("wholesale")).length} />

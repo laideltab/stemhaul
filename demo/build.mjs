@@ -17,7 +17,7 @@ const res = await build({
 });
 const js = res.outputFiles[0].text.replace(/<\/script/g, "<\\/script");
 const css = readFileSync("demo/dist/app.css", "utf8");
-const html = `<title>Stemhaul Demo</title>
+const html = `<title>Stem Haul Demo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>:root{color-scheme:light;--font-bricolage:"Bricolage Grotesque";--font-plex:"IBM Plex Sans";--font-plex-mono:"IBM Plex Mono"}</style>

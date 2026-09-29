@@ -44,7 +44,7 @@ export default function AddAWB() {
 
   return (
     <>
-      <PageHeader title="Add AWB" sub="Type the master AWB the airline or agency gave you, then add the confirmed lines that fly on it. Stemhaul gives each PO a house AWB." />
+      <PageHeader title="Add AWB" sub="Type the master AWB the airline or agency gave you, then add the confirmed lines that fly on it. Stem Haul gives each PO a house AWB." />
       <POTabs />
       <Card className="mb-4 grid gap-3 p-4 sm:grid-cols-5 sm:items-end">
         <Field label="Port of origin">
