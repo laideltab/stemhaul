@@ -167,16 +167,17 @@ export function buildSeed(): Data {
   };
   const poSpecs: { farm: string; ship: number; status: PurchaseOrder["status"]; awb?: string; lines: Spec[] }[] = [
     { farm: ESPERANZA, ship: -9, status: "received", awb: "A", lines: [["p_freedom50", "HB", 2, 32, "c_mari"], ["p_freedom50", "HB", 2, 32, "c_kendall"], ["p_vendela50", "HB", 2, 30, "c_bloom"], ["p_pinkfloyd60", "QB", 2, 45, "c_mari"]] },
-    { farm: "org_sabana", ship: -8, status: "received", awb: "B", lines: [["p_carnwhite", "HB", 2, 14, "c_mari"], ["p_carnwhite", "HB", 2, 14, "c_sunset"], ["p_carnpink", "HB", 3, 14, "c_kendall"], ["p_alstro", "QB", 3, 22, "c_mari"]] },
+    { farm: "org_sabana", ship: -8, status: "received", awb: "B", lines: [["p_carnwhite", "HB", 2, 14, "c_mari"], ["p_carnwhite", "HB", 2, 14, "c_sunset"], ["p_carnpink", "FB", 2, 14, "c_kendall"], ["p_alstro", "QB", 3, 22, "c_mari"]] },
     { farm: "org_andes", ship: -6, status: "received", awb: "C", lines: [["p_hydwhite", "HB", 2, 95, "c_mari"], ["p_hydwhite", "HB", 1, 95, "c_kendall"]] },
     { farm: ESPERANZA, ship: -3, status: "received", awb: "D", lines: [["p_freedom50", "HB", 3, 32, "c_mari"], ["p_freedom50", "HB", 2, 32], ["p_explorer70", "QB", 3, 55, "c_bloom"], ["p_momentum50", "QB", 2, 30]] },
-    { farm: "org_sabana", ship: -1, status: "shipped", awb: "E", lines: [["p_gyp", "QB", 4, 20, "c_mari"], ["p_euca", "QB", 3, 18], ["p_carnwhite", "HB", 2, 14, "c_sunset"]] },
+    { farm: "org_sabana", ship: -1, status: "shipped", awb: "E", lines: [["p_gyp", "QB", 4, 20, "c_mari"], ["p_euca", "QB", 3, 18], ["p_carnwhite", "FB", 2, 14, "c_sunset"]] },
     { farm: ESPERANZA, ship: 0, status: "shipped", awb: "F", lines: [["p_freedom50", "HB", 6, 33, "c_kendall"], ["p_vendela50", "QB", 3, 30, "c_mari"]] },
     { farm: ESPERANZA, ship: 2, status: "booked", awb: "G", lines: [["p_explorer70", "HB", 4, 55, "c_bloom"], ["p_pinkfloyd60", "QB", 4, 45, "c_mari"]] },
-    { farm: "org_andes", ship: 3, status: "confirmed", lines: [["p_hydwhite", "HB", 4, 95, "c_kendall", 3]] },
-    { farm: ESPERANZA, ship: 5, status: "sent", lines: [["p_freedom50", "HB", 8, 34, "c_mari"], ["p_momentum50", "QB", 2, 30]] },
-    { farm: "org_sabana", ship: 6, status: "draft", lines: [["p_alstro", "HB", 3, 22]] },
-    { farm: "org_pacifico", ship: 1, status: "labeled", awb: "H", lines: [["p_waxpink", "QB", 2, 28, "c_kendall"], ["p_waxwhite", "QB", 2, 28, "c_mari"]] },
+    { farm: "org_andes", ship: 3, status: "confirmed", lines: [["p_hydwhite", "FB", 2, 95, "c_kendall"], ["p_hydwhite", "HB", 2, 95, "c_mari", 1]] },
+    { farm: ESPERANZA, ship: 5, status: "sent", lines: [["p_freedom50", "HB", 8, 34, "c_mari"], ["p_freedom50", "FB", 2, 33], ["p_momentum50", "QB", 2, 30]] },
+    { farm: "org_sabana", ship: 6, status: "draft", lines: [["p_alstro", "FB", 2, 21], ["p_gyp", "EB", 4, 22, "c_mari"]] },
+    { farm: "org_pacifico", ship: 1, status: "labeled", awb: "H", lines: [["p_waxpink", "QB", 2, 28, "c_kendall"], ["p_waxwhite", "QB", 2, 28, "c_mari"], ["p_limonium", "EB", 3, 26, "c_mari"]] },
+    { farm: ESPERANZA, ship: 2, status: "confirmed", lines: [["p_freedom50", "FB", 2, 31, "c_sunset"], ["p_mondial50", "FB", 1, 29], ["p_freedom60", "EB", 4, 40, "c_mari"]] },
   ];
 
   const pos: PurchaseOrder[] = [];
@@ -443,12 +444,12 @@ export function buildSeed(): Data {
   const L = (farmId: string, rows: [string, BoxType, number, number, boolean?][]) =>
     rows.map(([productId, boxType, price, stock, listed = true]) => ({ farmId, productId, boxType, stemsPerBox: stemsFor(productId, boxType), farmPriceCents: price, stockBoxes: stock, listed }));
   const listings: Listing[] = [
-    ...L(ESPERANZA, [["p_freedom50", "HB", 32, 40], ["p_freedom60", "HB", 38, 38], ["p_freedom70", "HB", 45, 12], ["p_mondial50", "HB", 30, 24], ["p_mondial60", "HB", 36, 10], ["p_vendela50", "HB", 30, 6], ["p_vendela60", "HB", 36, 1], ["p_pinkfloyd60", "HB", 45, 16], ["p_brighton50", "HB", 32, 11], ["p_deeppurple50", "HB", 38, 9], ["p_gyp", "QB", 20, 20], ["p_explorer70", "HB", 55, 0, false]]),
-    ...L("org_cotopaxi", [["p_freedom50", "HB", 30, 30], ["p_freedom60", "HB", 36, 22], ["p_explorer70", "HB", 52, 14], ["p_momentum50", "HB", 28, 18]]),
-    ...L("org_sabana", [["p_carnwhite", "HB", 14, 60], ["p_carnpink", "HB", 14, 45], ["p_alstro", "QB", 22, 30], ["p_gyp", "QB", 20, 25]]),
+    ...L(ESPERANZA, [["p_freedom50", "HB", 32, 40], ["p_freedom60", "HB", 38, 38], ["p_freedom70", "HB", 45, 12], ["p_mondial50", "HB", 30, 24], ["p_mondial60", "HB", 36, 10], ["p_vendela50", "HB", 30, 6], ["p_vendela60", "HB", 36, 1], ["p_pinkfloyd60", "HB", 45, 16], ["p_brighton50", "HB", 32, 11], ["p_deeppurple50", "HB", 38, 9], ["p_gyp", "QB", 20, 20], ["p_explorer70", "HB", 55, 0, false], ["p_freedom50", "FB", 31, 14], ["p_mondial50", "FB", 29, 6]]),
+    ...L("org_cotopaxi", [["p_freedom50", "HB", 30, 30], ["p_freedom60", "HB", 36, 22], ["p_explorer70", "HB", 52, 14], ["p_momentum50", "HB", 28, 18], ["p_freedom50", "FB", 29, 10]]),
+    ...L("org_sabana", [["p_carnwhite", "HB", 14, 60], ["p_carnpink", "HB", 14, 45], ["p_alstro", "QB", 22, 30], ["p_gyp", "QB", 20, 25], ["p_carnwhite", "FB", 13, 30], ["p_carnpink", "FB", 13, 20]]),
     ...L("org_guasca", [["p_carnpink", "HB", 13, 20], ["p_spraylydia", "QB", 30, 16], ["p_pompon", "HB", 18, 24]]),
-    ...L("org_andes", [["p_hydwhite", "HB", 95, 20], ["p_hydblue", "HB", 105, 8]]),
-    ...L("org_pacifico", [["p_gyp", "QB", 19, 30], ["p_limonium", "QB", 24, 18], ["p_waxpink", "QB", 28, 12], ["p_waxwhite", "QB", 28, 10]]),
+    ...L("org_andes", [["p_hydwhite", "HB", 95, 20], ["p_hydblue", "HB", 105, 8], ["p_hydwhite", "FB", 92, 10]]),
+    ...L("org_pacifico", [["p_gyp", "QB", 19, 30], ["p_limonium", "QB", 24, 18], ["p_waxpink", "QB", 28, 12], ["p_waxwhite", "QB", 28, 10], ["p_waxpink", "EB", 30, 15]]),
     ...L("org_machachi", [["p_freedom50", "HB", 31, 20], ["p_vendela50", "HB", 30, 12]]),
   ].map((l, i) => ({ id: `ls_${i + 1}`, ...l }));
   const mapFarms: MapFarm[] = [

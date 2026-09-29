@@ -8,6 +8,8 @@ import { importerFor, shortName, mapFarmsFor } from "@/lib/market";
 import { FlowerBand, Stepper } from "@/components/market-ui";
 import { Badge, Card, Empty, LinkButton } from "@/components/ui";
 
+const BOX_ORDER = ["EB", "QB", "HB", "FB"];
+
 export default function FarmShop({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const s = useStore();
@@ -19,13 +21,13 @@ export default function FarmShop({ params }: { params: Promise<{ id: string }> }
 
   const product = (pid: string) => s.products.find((p) => p.id === pid)!;
   const species = tab && view.species.includes(tab) ? tab : view.species[0];
-  // One card per variety and color; each length is its own listing.
+  // One card per variety and color; each length and box size is its own listing.
   const groups = new Map<string, typeof view.listings>();
   for (const l of view.listings) {
     const p = product(l.productId);
     if (p.species !== species) continue;
     const k = `${p.variety}|${p.color}`;
-    groups.set(k, [...(groups.get(k) ?? []), l].sort((a, b) => product(a.productId).lengthCm - product(b.productId).lengthCm));
+    groups.set(k, [...(groups.get(k) ?? []), l].sort((a, b) => product(a.productId).lengthCm - product(b.productId).lengthCm || BOX_ORDER.indexOf(a.boxType) - BOX_ORDER.indexOf(b.boxType)));
   }
   const inCart = (lid: string) => s.cart.find((c) => c.listingId === lid)?.boxes ?? 0;
   const mine = view.listings.filter((l) => inCart(l.id) > 0);
@@ -82,7 +84,7 @@ export default function FarmShop({ params }: { params: Promise<{ id: string }> }
                           onClick={() => setLen({ ...len, [k]: l.id })}
                           className={cn("rounded-lg border px-2.5 py-1 text-center text-xs", l.id === cur.id ? "border-brand bg-brand-soft ring-1 ring-brand" : "border-line hover:bg-surface-2")}
                         >
-                          <div className="font-medium">{product(l.productId).lengthCm} cm</div>
+                          <div className="font-medium">{product(l.productId).lengthCm} cm · {l.boxType}</div>
                           <div className="tabular-nums text-muted">{perStem(l.saleCents)}</div>
                         </button>
                       ))}

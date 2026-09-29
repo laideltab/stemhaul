@@ -5,11 +5,11 @@ import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { money, num } from "@/lib/format";
-import { productName } from "@/lib/selectors";
+import { FBE, productName } from "@/lib/selectors";
 import type { BoxType, POLine } from "@/lib/types";
+import { stemsPerBox } from "@/lib/seed";
 import { Button, Card, CardHeader, Field, inputCls, PageHeader } from "@/components/ui";
 
-const defaultStems: Record<BoxType, number> = { FB: 500, HB: 250, QB: 100, EB: 50 };
 
 export default function NewPO() {
   const s = useStore();
@@ -50,7 +50,7 @@ export default function NewPO() {
           {lines.map((l, i) => (
             <div key={i} className="grid items-end gap-3 rounded-lg border border-line p-3 sm:grid-cols-[2fr_1.4fr_0.8fr_0.8fr_1fr_0.9fr_auto]">
               <Field label="Product">
-                <select className={inputCls} value={l.productId} onChange={(e) => upd(i, { productId: e.target.value })}>
+                <select className={inputCls} value={l.productId} onChange={(e) => upd(i, { productId: e.target.value, stemsPerBox: stemsPerBox(s.products.find((p) => p.id === e.target.value)?.species ?? "", l.boxType) })}>
                   {s.products.map((p) => <option key={p.id} value={p.id}>{productName(p)} · {p.color}</option>)}
                 </select>
               </Field>
@@ -61,8 +61,8 @@ export default function NewPO() {
                 </select>
               </Field>
               <Field label="Box type">
-                <select className={inputCls} value={l.boxType} onChange={(e) => { const bt = e.target.value as BoxType; upd(i, { boxType: bt, stemsPerBox: defaultStems[bt] }); }}>
-                  {(["FB", "HB", "QB", "EB"] as BoxType[]).map((b) => <option key={b}>{b}</option>)}
+                <select className={inputCls} value={l.boxType} onChange={(e) => { const bt = e.target.value as BoxType; upd(i, { boxType: bt, stemsPerBox: stemsPerBox(s.products.find((p) => p.id === l.productId)?.species ?? "", bt) }); }}>
+                  {(["FB", "HB", "QB", "EB"] as BoxType[]).map((b) => <option key={b} value={b}>{b} · {({ FB: "full", HB: "half", QB: "quarter", EB: "eighth" } as const)[b]} ({FBE[b]} FBE)</option>)}
                 </select>
               </Field>
               <Field label="Boxes"><input type="number" min={0} className={inputCls} value={l.boxes} onChange={(e) => upd(i, { boxes: Math.max(0, +e.target.value | 0) })} /></Field>

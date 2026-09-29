@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { boxSummary } from "@/lib/market";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { cn, date, money, num } from "@/lib/format";
@@ -45,7 +46,7 @@ export default function PurchaseOrders() {
                   <td><Link href={`/w/purchase-orders/${p.id}`} className="font-medium text-brand hover:underline">{p.number}</Link></td>
                   <td><span className="font-mono text-xs">{farm?.code}</span> <span className="text-muted">{farm?.name}</span></td>
                   <td>{date(p.shipDate)}</td>
-                  <td className="num">{boxes}</td>
+                  <td className="num whitespace-nowrap">{boxes}<div className="text-xs text-muted">{boxSummary(p.lines)}</div></td>
                   <td className={cn("num", confirmed !== undefined && confirmed < boxes && "font-medium text-bad")}>{confirmed ?? "—"}</td>
                   <td className="num">{p.lines.reduce((a, l) => a + fbe(l.boxType, l.confirmedBoxes ?? l.boxes), 0).toFixed(2)}</td>
                   <td className="num">{num(stems)}</td>
