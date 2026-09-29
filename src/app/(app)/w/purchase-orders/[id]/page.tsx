@@ -68,7 +68,7 @@ export default function PODetail({ params }: { params: Promise<{ id: string }> }
               <dt className="text-muted">House AWB</dt><dd className="font-mono">{awb.houses.find((h) => h.poId === po.id)?.hawb}</dd>
               <dt className="text-muted">Airline</dt><dd>{awb.airline}</dd>
               <dt className="text-muted">Flight</dt><dd>{awb.origin} → MIA · {date(awb.flightDate)}</dd>
-              <dt className="text-muted">Agency</dt><dd>{s.contacts.find((c) => c.id === awb.agencyId)?.name}</dd>
+              <dt className="text-muted">Agency</dt><dd>{s.contacts.find((c) => c.id === awb.agencyId)?.name ?? "None, booked direct with airline"}</dd>
               <dt className="text-muted">Status</dt><dd><Status value={awb.status} /></dd>
             </dl>
           ) : <Empty>Not booked yet.</Empty>}

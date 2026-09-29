@@ -27,7 +27,7 @@ interface Actions {
   sendPO: (poId: string) => void;
   farmConfirmPO: (poId: string) => void;
   farmPrintLabels: (poId: string) => void;
-  bookFreight: (poIds: string[], agencyId: string, airline: string, flightDate: string) => void;
+  bookFreight: (poIds: string[], agencyId: string | undefined, airline: string, flightDate: string, masterNumber?: string) => void;
   scanReceive: (code: string) => Result;
   markBox: (boxId: string, status: "missing" | "damaged" | "received") => void;
   deliverBoxes: (customerId: string, boxIds: string[], pricePerStemCents: Record<string, number>) => string;
@@ -133,7 +133,7 @@ export const useStore = create<Store>()(
             pos: s.pos.map((p) => (p.id === poId ? { ...p, status: "labeled" } : p)),
           }));
         },
-        bookFreight: (poIds, agencyId, airline, flightDate) => {
+        bookFreight: (poIds, agencyId, airline, flightDate, masterNumber) => {
           const n = next("awb");
           const id = `awb_${n}`;
           const houses = poIds.map((poId) => ({
@@ -144,7 +144,7 @@ export const useStore = create<Store>()(
           const prefix = airline.startsWith("Avianca") ? "729" : airline.startsWith("LATAM") ? "045" : "406";
           set((s) => ({
             awbs: [
-              { id, number: `${prefix}-${48300000 + n * 173}`, airline, agencyId, flightDate, origin: airline.startsWith("Avianca") ? "UIO" : "BOG", status: "booked", houses },
+              { id, number: masterNumber?.trim() || `${prefix}-${48300000 + n * 173}`, airline, agencyId, flightDate, origin: airline.startsWith("Avianca") ? "UIO" : "BOG", status: "booked", houses },
               ...s.awbs,
             ],
             pos: s.pos.map((p) => (poIds.includes(p.id) ? { ...p, status: "shipped", awbId: id } : p)),

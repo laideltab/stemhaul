@@ -92,7 +92,8 @@ export interface MasterAWB {
   id: string;
   number: string;
   airline: string;
-  agencyId: string;
+  /** Missing when the wholesaler books directly with the airline, with no cargo agency. */
+  agencyId?: string;
   flightDate: string;
   origin: string;
   status: "booked" | "departed" | "arrived";

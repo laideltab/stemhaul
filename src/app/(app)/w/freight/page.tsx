@@ -14,6 +14,8 @@ export default function Freight() {
   const agencies = s.contacts.filter((c) => c.ownerOrgId === orgId && c.kind === "agency");
   const [sel, setSel] = useState<string[]>([]);
   const [agencyId, setAgencyId] = useState(agencies[0]?.id ?? "");
+  const [direct, setDirect] = useState(false);
+  const [master, setMaster] = useState("");
   const [airline, setAirline] = useState(airlines[0]);
   const [flight, setFlight] = useState(new Date().toISOString().slice(0, 10));
   const poIds = new Set(s.pos.filter((p) => p.wholesalerId === orgId).map((p) => p.id));
@@ -21,7 +23,7 @@ export default function Freight() {
 
   return (
     <>
-      <PageHeader title="Freight & AWBs" sub="Book cargo with the agency. Each purchase order gets a house AWB under the master AWB." />
+      <PageHeader title="Freight & AWBs" sub="Book cargo through a cargo agency or directly with the airline. Each purchase order gets a house AWB under the master AWB." />
       <Card className="mb-6">
         <CardHeader title="Book freight" sub="Purchase orders with labels printed and not booked yet" />
         {labeled.length ? (
@@ -38,17 +40,28 @@ export default function Freight() {
                 );
               })}
             </div>
+            <div className="inline-flex w-fit rounded-lg border border-line bg-surface p-1 text-sm">
+              <button onClick={() => setDirect(false)} className={`rounded-md px-3 py-1.5 ${!direct ? "bg-brand text-white" : "text-muted"}`}>Through a cargo agency</button>
+              <button onClick={() => setDirect(true)} className={`rounded-md px-3 py-1.5 ${direct ? "bg-brand text-white" : "text-muted"}`}>Direct with the airline</button>
+            </div>
+            {direct && <p className="text-sm text-muted">No agency: you book the space with the airline yourself and type the master AWB number it gives you. Stemhaul still creates one house reference per purchase order so boxes can be tracked and scanned.</p>}
             <div className="grid gap-3 sm:grid-cols-4 sm:items-end">
-              <Field label="Cargo agency">
-                <select className={inputCls} value={agencyId} onChange={(e) => setAgencyId(e.target.value)}>
-                  {agencies.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-                </select>
-              </Field>
+              {direct ? (
+                <Field label="Master AWB from the airline">
+                  <input className={`${inputCls} font-mono`} placeholder="e.g. 729-12345675" value={master} onChange={(e) => setMaster(e.target.value)} />
+                </Field>
+              ) : (
+                <Field label="Cargo agency">
+                  <select className={inputCls} value={agencyId} onChange={(e) => setAgencyId(e.target.value)}>
+                    {agencies.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                  </select>
+                </Field>
+              )}
               <Field label="Airline">
                 <select className={inputCls} value={airline} onChange={(e) => setAirline(e.target.value)}>{airlines.map((a) => <option key={a}>{a}</option>)}</select>
               </Field>
               <Field label="Flight date"><input type="date" className={inputCls} value={flight} onChange={(e) => setFlight(e.target.value)} /></Field>
-              <Button disabled={!sel.length} onClick={() => { s.bookFreight(sel, agencyId, airline, flight); setSel([]); }}>Book {sel.length || ""} and issue AWB</Button>
+              <Button disabled={!sel.length} onClick={() => { s.bookFreight(sel, direct ? undefined : agencyId, airline, flight, direct ? master : undefined); setSel([]); setMaster(""); }}>Book {sel.length || ""} and issue AWB</Button>
             </div>
           </div>
         ) : <Empty>No purchase orders waiting for freight. Labels come from the farm portal.</Empty>}
@@ -57,11 +70,12 @@ export default function Freight() {
       <Card>
         <CardHeader title="Master AWBs" />
         <Table>
-          <thead><tr><th>Master AWB</th><th>Airline</th><th>Route</th><th>Flight</th><th>House AWBs</th><th className="num">Pieces</th><th>Status</th></tr></thead>
+          <thead><tr><th>Master AWB</th><th>Booked via</th><th>Airline</th><th>Route</th><th>Flight</th><th>House AWBs</th><th className="num">Pieces</th><th>Status</th></tr></thead>
           <tbody>
             {awbs.map((a) => (
               <tr key={a.id}>
                 <td className="font-mono text-xs">{a.number}</td>
+                <td>{s.contacts.find((c) => c.id === a.agencyId)?.name ?? <span className="text-muted">Direct</span>}</td>
                 <td>{a.airline}</td>
                 <td>{a.origin} → MIA</td>
                 <td>{date(a.flightDate)}</td>
