@@ -1,0 +1,215 @@
+// Stems are always integers. Money is always integer cents.
+
+export type OrgKind = "wholesaler" | "florist" | "farm";
+export type ModuleKey = "wholesale" | "florist";
+
+export interface Org {
+  id: string;
+  name: string;
+  kind: OrgKind;
+  city: string;
+  modules: ModuleKey[];
+  plan: "Starter" | "Pro" | "Enterprise" | "Farm (free)";
+  billing: "active" | "trial" | "past_due";
+  since: string;
+}
+
+export type Role = "owner" | "purchasing" | "warehouse" | "cashier" | "accountant" | "farm";
+
+export interface User {
+  id: string;
+  orgId: string;
+  name: string;
+  email: string;
+  role: Role;
+  active: boolean;
+}
+
+export interface Product {
+  id: string;
+  species: string;
+  variety: string;
+  color: string;
+  lengthCm: number;
+  stemsPerBunch: number;
+}
+
+export type BoxType = "FB" | "HB" | "QB" | "EB";
+
+export interface Contact {
+  id: string;
+  ownerOrgId: string;
+  kind: "farm" | "vendor" | "agency" | "customer";
+  name: string;
+  country: string;
+  /** When this contact is itself a Stemhaul account (e.g. a licensed florist). */
+  linkedOrgId?: string;
+  terms?: string;
+}
+
+export type POStatus = "draft" | "sent" | "confirmed" | "labeled" | "shipped" | "received";
+
+export interface POLine {
+  productId: string;
+  boxType: BoxType;
+  boxes: number;
+  stemsPerBox: number;
+  pricePerStemCents: number;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  number: string;
+  wholesalerId: string;
+  farmId: string; // org id of the farm
+  shipDate: string;
+  status: POStatus;
+  lines: POLine[];
+  awbId?: string;
+  createdAt: string;
+}
+
+export type BoxStatus = "labeled" | "in_transit" | "received" | "delivered" | "missing" | "damaged";
+
+export interface Box {
+  id: string;
+  code: string; // label barcode
+  poId: string;
+  lineIndex: number;
+  productId: string;
+  boxType: BoxType;
+  stems: number;
+  costPerStemCents: number;
+  status: BoxStatus;
+  hawb?: string;
+  customerId?: string;
+  invoiceId?: string;
+  /** Set when a licensed florist has scanned it in. */
+  floristReceivedAt?: string;
+}
+
+export interface MasterAWB {
+  id: string;
+  number: string;
+  airline: string;
+  agencyId: string;
+  flightDate: string;
+  origin: string;
+  status: "booked" | "departed" | "arrived";
+  houses: { hawb: string; poId: string; pieces: number }[];
+}
+
+export interface Invoice {
+  id: string;
+  number: string;
+  wholesalerId: string;
+  customerId: string;
+  date: string;
+  dueDate: string;
+  lines: { boxId: string; description: string; stems: number; pricePerStemCents: number }[];
+  totalCents: number;
+  paidCents: number;
+}
+
+export interface Bill {
+  id: string;
+  ownerOrgId: string;
+  vendor: string;
+  reference: string;
+  date: string;
+  dueDate: string;
+  totalCents: number;
+  paidCents: number;
+}
+
+// ---- Florist module ----
+
+export type MovementType = "receive" | "bunch" | "sale" | "waste" | "adjust";
+
+export interface StockMovement {
+  id: string;
+  orgId: string;
+  at: string;
+  productId: string;
+  stems: number; // + in, - out
+  type: MovementType;
+  note: string;
+  userId?: string;
+}
+
+export interface Receipt {
+  id: string;
+  orgId: string;
+  at: string;
+  source: "stemhaul" | "manual";
+  supplier: string;
+  lines: { productId: string; stems: number; costPerStemCents: number; boxCode?: string }[];
+  totalCents: number;
+}
+
+export interface SaleItem {
+  id: string;
+  orgId: string;
+  name: string;
+  kind: "bunch" | "arrangement" | "box";
+  recipe: { productId: string; stems: number }[];
+  retailCents: number;
+  wholesaleCents: number;
+  onWeb: boolean;
+  /** Pre-made units ready on the shelf. */
+  ready: number;
+}
+
+export type Payment = "cash" | "card" | "account";
+
+export interface Sale {
+  id: string;
+  orgId: string;
+  number: string;
+  at: string;
+  channel: "store" | "web";
+  customerType: "retail" | "wholesale";
+  customerName?: string;
+  cashierId: string;
+  shiftId?: string;
+  payment: Payment;
+  lines: { itemId: string; name: string; qty: number; unitCents: number }[];
+  totalCents: number;
+  voided?: boolean;
+}
+
+export interface Shift {
+  id: string;
+  orgId: string;
+  cashierId: string;
+  openedAt: string;
+  openingFloatCents: number;
+  closedAt?: string;
+  countedCashCents?: number;
+  note?: string;
+}
+
+export interface OnlineOrder {
+  id: string;
+  orgId: string;
+  number: string;
+  at: string;
+  customer: string;
+  deliveryDate: string;
+  address: string;
+  lines: { itemId: string; name: string; qty: number; unitCents: number }[];
+  totalCents: number;
+  status: "new" | "preparing" | "ready" | "delivered";
+  saleId?: string;
+}
+
+export interface QBBatch {
+  id: string;
+  orgId: string;
+  at: string;
+  kind: "sales" | "invoices" | "bills";
+  description: string;
+  count: number;
+  totalCents: number;
+  status: "sent" | "error";
+}

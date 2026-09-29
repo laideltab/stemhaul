@@ -1,26 +1,65 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #f5f4ef;
+  --surface: #ffffff;
+  --surface-2: #f0efe9;
+  --fg: #1c211e;
+  --muted: #5f6862;
+  --line: #e2e0d8;
+  --brand: #1f4d3a;
+  --brand-fg: #ffffff;
+  --brand-soft: #e2eee6;
+  --sidebar: #163a2c;
+  --sidebar-fg: #d8e6dd;
+  --sidebar-active: #25573f;
+  --accent: #c2410c;
+  --good: #1f7a4a;
+  --good-soft: #def2e5;
+  --warn: #9a6a00;
+  --warn-soft: #fbf0d0;
+  --bad: #b42318;
+  --bad-soft: #fde4e1;
+  --info: #2b5c9e;
+  --info-soft: #e0eaf7;
+  --bar: #2f7a57;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-fg: var(--brand-fg);
+  --color-brand-soft: var(--brand-soft);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-fg: var(--sidebar-fg);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-accent: var(--accent);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-bar: var(--bar);
+  --font-sans: var(--font-plex), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --font-display: var(--font-bricolage), system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
 }
