@@ -22,7 +22,7 @@ export default function OnlineOrders() {
       />
       <div className="mb-4"><Notice result={res} /></div>
       <Card>
-        <CardHeader title={`${orders.filter((o) => o.status !== "delivered").length} open orders`} />
+        <CardHeader title={`${orders.filter((o) => o.status !== "delivered" && o.status !== "cancelled").length} open orders`} />
         <Table>
           <thead><tr><th>Order</th><th>Placed</th><th>Customer</th><th>Deliver</th><th>Items</th><th className="num">Total</th><th>Status</th><th /></tr></thead>
           <tbody>
@@ -35,7 +35,10 @@ export default function OnlineOrders() {
                 <td className="text-muted">{o.lines.map((l) => `${l.qty}× ${l.name}`).join(", ")}</td>
                 <td className="num">{money(o.totalCents)}</td>
                 <td><Status value={o.status} /></td>
-                <td className="text-right">{o.status !== "delivered" && <Button variant="secondary" className="h-7 px-2 text-xs" onClick={() => setRes(s.advanceOnlineOrder(o.id))}>{nextLabel[o.status]}</Button>}</td>
+                <td className="whitespace-nowrap text-right">
+                  {o.status === "new" && <Button variant="ghost" className="mr-1 h-7 px-2 text-xs text-bad" onClick={() => setRes(s.cancelOnlineOrder(o.id))}>Cancel</Button>}
+                  {o.status !== "delivered" && o.status !== "cancelled" && <Button variant="secondary" className="h-7 px-2 text-xs" onClick={() => setRes(s.advanceOnlineOrder(o.id))}>{nextLabel[o.status]}</Button>}
+                </td>
               </tr>
             ))}
           </tbody>

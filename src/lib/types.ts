@@ -216,7 +216,7 @@ export interface MarketOrder {
   shipDate: string;
   delivery: "shop" | "pickup";
   payment: "account" | "card";
-  status: "pending" | "confirmed" | "declined";
+  status: "pending" | "confirmed" | "declined" | "cancelled";
   confirmedAt?: string;
   poId?: string;
   lines: MarketLine[];
@@ -265,7 +265,7 @@ export interface Prebook {
   neededBy: string;
   note?: string;
   weekly: boolean;
-  status: "requested" | "confirmed" | "declined";
+  status: "requested" | "confirmed" | "declined" | "cancelled";
   answeredAt?: string;
   answerNote?: string;
   lines: PrebookLine[];
@@ -348,7 +348,7 @@ export interface OnlineOrder {
   address: string;
   lines: { itemId: string; name: string; qty: number; unitCents: number }[];
   totalCents: number;
-  status: "new" | "preparing" | "ready" | "delivered";
+  status: "new" | "preparing" | "ready" | "delivered" | "cancelled";
   saleId?: string;
 }
 

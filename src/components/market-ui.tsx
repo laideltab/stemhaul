@@ -46,6 +46,7 @@ export function Stepper({ value, max, onChange, unit }: { value: number; max: nu
 export function FloristOrderBadge({ order, stages }: { order: MarketOrder; stages: Stage[] }) {
   if (order.status === "pending") return <Badge tone="warn">Waiting for farm</Badge>;
   if (order.status === "declined") return <Badge tone="bad">Declined</Badge>;
+  if (order.status === "cancelled") return <Badge>Cancelled</Badge>;
   const last = [...stages].reverse().find((s) => s.done)!;
   const partly = order.lines.some((l) => (l.confirmedBoxes ?? 0) < l.boxes);
   return <Badge tone={last.label === "At your shop" ? "good" : last.label === "Farm confirmed" ? "brand" : "info"}>{last.label === "Farm confirmed" && partly ? "Partly confirmed" : last.label}</Badge>;

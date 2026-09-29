@@ -8,7 +8,7 @@ import { money, time } from "@/lib/format";
 import { orderStages, orderTotals, shortName } from "@/lib/market";
 import { Tracker } from "@/components/market-ui";
 import { FloristOrderList } from "@/components/florist-orders";
-import { Badge, Card, CardHeader, Empty, LinkButton, PageHeader, Table } from "@/components/ui";
+import { Badge, Card, CardHeader, ConfirmButton, Empty, LinkButton, PageHeader, Qty, Table } from "@/components/ui";
 
 export default function FloristMarketOrder({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -38,7 +38,7 @@ export default function FloristMarketOrder({ params }: { params: Promise<{ id: s
               <span className="grid size-10 shrink-0 place-items-center rounded-full bg-warn text-white"><Clock size={20} /></span>
               <div>
                 <div className="font-semibold">Waiting for {farm.name} to confirm</div>
-                <p className="text-sm text-muted">They got a notification at {time(o.createdAt)} and have until {time(o.confirmBy)}. Nothing is charged until they confirm.</p>
+                <p className="text-sm text-muted">They got a notification at {time(o.createdAt)} and have until {time(o.confirmBy)}. Nothing is charged until they confirm. You can still change the boxes or cancel below.</p>
               </div>
             </Card>
           )}
@@ -55,6 +55,15 @@ export default function FloristMarketOrder({ params }: { params: Promise<{ id: s
               </div>
             </Card>
           )}
+          {o.status === "cancelled" && (
+            <Card className="flex gap-4 border-line bg-surface-2 p-4">
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-muted text-white"><X size={20} /></span>
+              <div>
+                <div className="font-semibold">You cancelled this order</div>
+                <p className="text-sm text-muted">{farm.name} was told. Nothing was charged.</p>
+              </div>
+            </Card>
+          )}
           {o.status === "declined" && (
             <Card className="flex gap-4 border-bad/30 bg-bad-soft/60 p-4">
               <span className="grid size-10 shrink-0 place-items-center rounded-full bg-bad text-white"><X size={20} /></span>
@@ -64,7 +73,7 @@ export default function FloristMarketOrder({ params }: { params: Promise<{ id: s
               </div>
             </Card>
           )}
-          {o.status !== "declined" && (
+          {o.status !== "declined" && o.status !== "cancelled" && (
             <Card>
               <CardHeader title="Where your boxes are" />
               <div className="p-4"><Tracker stages={stages} /></div>
@@ -80,12 +89,19 @@ export default function FloristMarketOrder({ params }: { params: Promise<{ id: s
                   return (
                     <tr key={i}>
                       <td className="font-medium">{p.variety} {p.color.toLowerCase()} {p.lengthCm} cm</td>
-                      <td className="num">{l.boxes} {l.boxType}</td>
+                      <td className="num">
+                        {o.status === "pending" ? (
+                          <Qty
+                            value={l.boxes} unit={l.boxType} max={s.listings.find((x) => x.id === l.listingId)?.stockBoxes} name={`box of ${p.variety}`} removable={o.lines.length > 1}
+                            onChange={(n) => s.editMarketOrder(o.id, o.lines.map((x, j) => (j === i ? n : x.boxes)))}
+                          />
+                        ) : `${l.boxes} ${l.boxType}`}
+                      </td>
                       <td className="num">{c === undefined ? "—" : `${c} ${l.boxType}`}</td>
                       <td className="num">{`$${(l.salePriceCents / 100).toFixed(2)}`}</td>
                       <td className="num">{money((c ?? l.boxes) * l.stemsPerBox * l.salePriceCents)}</td>
                       <td>
-                        {c === undefined ? <Badge tone="warn">Waiting</Badge> : c === 0 ? <Badge tone="bad">Not available</Badge> : c < l.boxes ? <Badge tone="warn">Partly confirmed</Badge> : <Badge tone="brand">Confirmed</Badge>}
+                        {o.status === "cancelled" ? <Badge>Cancelled</Badge> : c === undefined ? <Badge tone="warn">Waiting</Badge> : c === 0 ? <Badge tone="bad">Not available</Badge> : c < l.boxes ? <Badge tone="warn">Partly confirmed</Badge> : <Badge tone="brand">Confirmed</Badge>}
                       </td>
                     </tr>
                   );
@@ -100,6 +116,9 @@ export default function FloristMarketOrder({ params }: { params: Promise<{ id: s
               </tfoot>
             </Table>
           </Card>
+          {o.status === "pending" && (
+            <div className="flex justify-end"><ConfirmButton label="Cancel order" question={`Cancel ${o.number}?`} onConfirm={() => s.cancelMarketOrder(o.id)} /></div>
+          )}
           {short.length > 0 && <div><LinkButton href="/f/market">Order the missing boxes from another farm</LinkButton></div>}
         </div>
         <div className="h-fit"><FloristOrderList current={o.id} /></div>

@@ -9,10 +9,10 @@ import { cn, date, money, perStem, time } from "@/lib/format";
 import { importerFor, shortName } from "@/lib/market";
 import { askLabel, lineStage, prebookTotals } from "@/lib/prebook";
 import type { Prebook, PrebookLine } from "@/lib/types";
-import { Badge, Button, Card, Empty, LinkButton, PageHeader, Table } from "@/components/ui";
+import { Badge, Button, Card, ConfirmButton, Empty, LinkButton, PageHeader, Qty, Table } from "@/components/ui";
 
 function PrebookStatus({ pb }: { pb: Prebook }) {
-  return pb.status === "requested" ? <Badge tone="warn">Waiting for answer</Badge> : pb.status === "confirmed" ? <Badge tone="brand">Confirmed</Badge> : <Badge tone="bad">Could not source</Badge>;
+  return pb.status === "requested" ? <Badge tone="warn">Waiting for answer</Badge> : pb.status === "confirmed" ? <Badge tone="brand">Confirmed</Badge> : pb.status === "cancelled" ? <Badge>Cancelled</Badge> : <Badge tone="bad">Could not source</Badge>;
 }
 
 export default function FloristPrebooks() {
@@ -61,7 +61,7 @@ export default function FloristPrebooks() {
                 <span className="grid size-10 shrink-0 place-items-center rounded-full bg-warn text-white"><Clock size={20} /></span>
                 <div>
                   <div className="font-semibold">{its} is finding your flowers</div>
-                  <p className="text-sm text-muted">Sent {date(pb.createdAt)} at {time(pb.createdAt)}. They will confirm the boxes and the price per stem; nothing is charged before that.</p>
+                  <p className="text-sm text-muted">Sent {date(pb.createdAt)} at {time(pb.createdAt)}. They will confirm the boxes and the price per stem; nothing is charged before that. Until then you can change the boxes or cancel.</p>
                 </div>
               </Card>
             )}
@@ -71,6 +71,15 @@ export default function FloristPrebooks() {
                 <div>
                   <div className="font-semibold">{its} confirmed {prebookTotals(pb, stems).confirmed} of {prebookTotals(pb, stems).asked} boxes</div>
                   <p className="text-sm text-muted">{pb.answerNote ? `"${pb.answerNote}" ` : ""}They will invoice you {money(prebookTotals(pb, stems).cents)} when the boxes are delivered.</p>
+                </div>
+              </Card>
+            )}
+            {pb.status === "cancelled" && (
+              <Card className="flex gap-4 bg-surface-2 p-4">
+                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-muted text-white"><X size={20} /></span>
+                <div>
+                  <div className="font-semibold">You cancelled this prebook</div>
+                  <p className="text-sm text-muted">{its} was told. Nothing was charged.</p>
                 </div>
               </Card>
             )}
@@ -97,11 +106,15 @@ export default function FloristPrebooks() {
                           <div className="font-medium">{askLabel(l)}</div>
                           {l.targetCents && <div className="text-xs text-muted">Target {perStem(l.targetCents)}</div>}
                         </td>
-                        <td className="num">{l.confirmedBoxes !== undefined && l.confirmedBoxes !== l.boxes ? <><s className="text-muted">{l.boxes}</s> {l.confirmedBoxes}</> : l.boxes} {l.boxType}</td>
+                        <td className="num">
+                          {pb.status === "requested" ? (
+                            <Qty value={l.boxes} unit={l.boxType} name={`box of ${l.species.toLowerCase()}`} removable={pb.lines.length > 1} onChange={(n) => s.editPrebook(pb.id, pb.lines.map((x, j) => (j === i ? { ...x, boxes: n } : x)))} />
+                          ) : l.confirmedBoxes !== undefined && l.confirmedBoxes !== l.boxes ? <><s className="text-muted">{l.boxes}</s> {l.confirmedBoxes} {l.boxType}</> : `${l.boxes} ${l.boxType}`}
+                        </td>
                         <td>{p && l.confirmedBoxes ? <><div>{p.variety} {p.color.toLowerCase()} {p.lengthCm} cm</div><div className="text-xs text-muted">{sourceOf(l)}</div></> : "—"}</td>
                         <td className="num">{l.priceCents && l.confirmedBoxes ? perStem(l.priceCents) : "—"}</td>
                         <td className="num">{l.priceCents && l.confirmedBoxes ? money(l.confirmedBoxes * stems(l) * l.priceCents) : "—"}</td>
-                        <td><Badge tone={stage.tone}>{stage.label}</Badge></td>
+                        <td>{pb.status === "cancelled" ? <Badge>Cancelled</Badge> : <Badge tone={stage.tone}>{stage.label}</Badge>}</td>
                       </tr>
                     );
                   })}
@@ -120,6 +133,9 @@ export default function FloristPrebooks() {
                 <p>{its} ships it on its own AWB with your mark code on every box. Scan the boxes in Receive Boxes when they reach your shop.</p>
               </Card>
             </div>
+            {pb.status === "requested" && (
+              <div className="flex justify-end"><ConfirmButton label="Cancel prebook" question={`Cancel ${pb.number}?`} onConfirm={() => s.cancelPrebook(pb.id)} /></div>
+            )}
             {pb.status !== "requested" && (
               <div className="flex justify-end">
                 <Button variant="secondary" onClick={() => { const id = s.repeatPrebook(pb.id); if (id) setPick(id); }}>

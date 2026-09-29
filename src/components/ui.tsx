@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import type { ComponentProps, ReactNode } from "react";
+import { useState, type ComponentProps, type ReactNode } from "react";
+import { Minus, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/format";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
@@ -69,7 +70,7 @@ const statusTone: Record<string, Tone> = {
   booked: "brand", departed: "info", arrived: "good", closed: "info",
   new: "warn", preparing: "info", ready: "brand",
   paid: "good", open: "warn", overdue: "bad", partial: "info",
-  active: "good", trial: "info", past_due: "bad", error: "bad",
+  active: "good", trial: "info", past_due: "bad", error: "bad", cancelled: "bad",
 };
 export function Status({ value }: { value: string }) {
   return <Badge tone={statusTone[value] ?? "neutral"}>{value.replace("_", " ")}</Badge>;
@@ -115,5 +116,40 @@ export function Notice({ result }: { result: { ok: boolean; message: string } | 
   if (!result || !result.message) return null;
   return (
     <div className={cn("rounded-lg px-3 py-2 text-sm", result.ok ? "bg-good-soft text-good" : "bg-bad-soft text-bad")}>{result.message}</div>
+  );
+}
+
+/** Quantity with − / + and a trash button, used by every cart and editable order. */
+export function Qty({ value, onChange, max, unit, name, removable = true }: { value: number; onChange: (n: number) => void; max?: number; unit?: string; name: string; removable?: boolean }) {
+  return (
+    <div className="inline-flex items-center gap-1">
+      <div className="inline-flex h-8 items-center rounded-lg border border-line bg-surface">
+        <button type="button" className="grid h-full w-8 place-items-center rounded-l-lg hover:bg-surface-2 disabled:opacity-40" onClick={() => onChange(value - 1)} disabled={value <= 1} aria-label={`One less ${name}`}>
+          <Minus size={14} />
+        </button>
+        <span className="min-w-10 px-1 text-center text-sm font-semibold tabular-nums">{value}{unit ? ` ${unit}` : ""}</span>
+        <button type="button" className="grid h-full w-8 place-items-center rounded-r-lg hover:bg-surface-2 disabled:opacity-40" onClick={() => onChange(value + 1)} disabled={max !== undefined && value >= max} aria-label={`One more ${name}`}>
+          <Plus size={14} />
+        </button>
+      </div>
+      {removable && (
+        <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-bad-soft hover:text-bad" onClick={() => onChange(0)} aria-label={`Remove ${name}`} title="Remove">
+          <Trash2 size={15} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** Destructive button that asks once more inline (the demo can't use browser dialogs). */
+export function ConfirmButton({ label, question, onConfirm, className }: { label: string; question: string; onConfirm: () => void; className?: string }) {
+  const [asking, setAsking] = useState(false);
+  if (!asking) return <Button variant="secondary" className={cn("text-bad", className)} onClick={() => setAsking(true)}>{label}</Button>;
+  return (
+    <span className="inline-flex flex-wrap items-center gap-2 rounded-lg bg-bad-soft px-3 py-1.5 text-sm text-bad">
+      {question}
+      <Button variant="danger" className="h-8" onClick={() => { setAsking(false); onConfirm(); }}>Yes</Button>
+      <Button variant="ghost" className="h-8" onClick={() => setAsking(false)}>No</Button>
+    </span>
   );
 }

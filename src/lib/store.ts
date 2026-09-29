@@ -56,6 +56,14 @@ interface Actions {
   updateListing: (listingId: string, patch: Partial<Pick<Listing, "farmPriceCents" | "stockBoxes" | "listed">>) => void;
   setMapFarm: (farmId: string, patch: Partial<Pick<MapFarm, "markupPct" | "enabled">>) => void;
 
+  editMarketOrder: (orderId: string, boxes: number[]) => void;
+  cancelMarketOrder: (orderId: string) => void;
+  editPrebook: (prebookId: string, lines: PrebookLine[]) => void;
+  cancelPrebook: (prebookId: string) => void;
+  editPO: (poId: string, boxes: number[]) => void;
+  deletePO: (poId: string) => void;
+  cancelOnlineOrder: (orderId: string) => Result;
+
   createPrebook: (input: Pick<Prebook, "neededBy" | "note" | "weekly" | "lines">) => string | undefined;
   repeatPrebook: (prebookId: string) => string | undefined;
   confirmPrebook: (prebookId: string, lines: PrebookLine[], note: string) => Result;
@@ -279,8 +287,9 @@ export const useStore = create<Store>()(
           set((s) => {
             const max = s.listings.find((l) => l.id === listingId)?.stockBoxes ?? 0;
             const n = Math.max(0, Math.min(max, Math.round(boxes)));
-            const rest = s.cart.filter((c) => c.listingId !== listingId);
-            return { cart: n ? [...rest, { listingId, boxes: n }] : rest };
+            // Keep each line where it is so the cart does not jump while editing.
+            if (!n) return { cart: s.cart.filter((c) => c.listingId !== listingId) };
+            return { cart: s.cart.some((c) => c.listingId === listingId) ? s.cart.map((c) => (c.listingId === listingId ? { ...c, boxes: n } : c)) : [...s.cart, { listingId, boxes: n }] };
           }),
         placeMarketOrders: (delivery, payment) => {
           const s = get();
@@ -345,6 +354,45 @@ export const useStore = create<Store>()(
         updateListing: (listingId, patch) => set((st) => ({ listings: st.listings.map((l) => (l.id === listingId ? { ...l, ...patch } : l)) })),
         setMapFarm: (farmId, patch) =>
           set((st) => ({ mapFarms: st.mapFarms.map((m) => (m.wholesalerId === me().orgId && m.farmId === farmId ? { ...m, ...patch } : m)) })),
+
+        // Florists can change or cancel an order until the farm (or the importer) answers it.
+        editMarketOrder: (orderId, boxes) =>
+          set((st) => ({
+            marketOrders: st.marketOrders.map((o) => {
+              if (o.id !== orderId || o.status !== "pending") return o;
+              const lines = o.lines
+                .map((l, i) => ({ ...l, boxes: Math.max(0, Math.min(st.listings.find((x) => x.id === l.listingId)?.stockBoxes ?? l.boxes, Math.round(boxes[i] ?? l.boxes))) }))
+                .filter((l) => l.boxes > 0);
+              return lines.length ? { ...o, lines } : { ...o, status: "cancelled", confirmedAt: now() };
+            }),
+          })),
+        cancelMarketOrder: (orderId) =>
+          set((st) => ({ marketOrders: st.marketOrders.map((o) => (o.id === orderId && o.status === "pending" ? { ...o, status: "cancelled", confirmedAt: now() } : o)) })),
+        editPrebook: (prebookId, lines) =>
+          set((st) => ({
+            prebooks: st.prebooks.map((p) => {
+              if (p.id !== prebookId || p.status !== "requested") return p;
+              const kept = lines.filter((l) => l.boxes > 0);
+              return kept.length ? { ...p, lines: kept } : { ...p, status: "cancelled", answeredAt: now() };
+            }),
+          })),
+        cancelPrebook: (prebookId) =>
+          set((st) => ({ prebooks: st.prebooks.map((p) => (p.id === prebookId && p.status === "requested" ? { ...p, status: "cancelled", answeredAt: now() } : p)) })),
+        // Purchase orders stay editable until the farm confirms them.
+        editPO: (poId, boxes) =>
+          set((st) => {
+            const po = st.pos.find((p) => p.id === poId);
+            if (!po || !["draft", "sent"].includes(po.status)) return {};
+            const lines = po.lines.map((l, i) => ({ ...l, boxes: Math.max(0, Math.round(boxes[i] ?? l.boxes)) })).filter((l) => l.boxes > 0);
+            return { pos: lines.length ? st.pos.map((p) => (p.id === poId ? { ...p, lines } : p)) : st.pos.filter((p) => p.id !== poId) };
+          }),
+        deletePO: (poId) => set((st) => ({ pos: st.pos.filter((p) => p.id !== poId || !["draft", "sent"].includes(p.status)) })),
+        cancelOnlineOrder: (orderId) => {
+          const o = get().onlineOrders.find((x) => x.id === orderId);
+          if (!o || o.status !== "new") return { ok: false, message: "Only new orders can be cancelled; the flowers are already out of inventory." };
+          set((st) => ({ onlineOrders: st.onlineOrders.map((x) => (x.id === orderId ? { ...x, status: "cancelled" } : x)) }));
+          return { ok: true, message: `${o.number} cancelled.` };
+        },
 
         createPrebook: (input) => {
           const s = get();

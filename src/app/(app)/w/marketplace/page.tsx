@@ -67,6 +67,7 @@ export default function WholesaleMarketplace() {
                     <td>
                       {po ? <Link href={`/w/purchase-orders/${po.id}`}><Badge tone="brand">{po.number}</Badge></Link>
                         : o.status === "pending" ? <Badge tone="warn">{timeLeft(o.confirmBy, now).late ? "Late" : "Waiting on farm"}</Badge>
+                        : o.status === "cancelled" ? <Badge>Cancelled by florist</Badge>
                         : <Badge tone="bad">Declined</Badge>}
                     </td>
                   </tr>

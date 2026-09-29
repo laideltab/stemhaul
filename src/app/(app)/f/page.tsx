@@ -56,7 +56,7 @@ export default function FloristDashboard() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Sales today" value={money(todays.reduce((a, x) => a + x.totalCents, 0))} sub={`${todays.length} tickets`} />
         <Stat label="Boxes to receive" value={incoming.length} sub={incoming.length ? "Delivered by International Trading and Services (ITS)" : "All caught up"} />
-        <Stat label="New web orders" value={newWeb.length} sub={`${s.onlineOrders.filter((o) => o.orgId === orgId && o.status !== "delivered").length} not delivered`} />
+        <Stat label="New web orders" value={newWeb.length} sub={`${s.onlineOrders.filter((o) => o.orgId === orgId && o.status !== "delivered" && o.status !== "cancelled").length} not delivered`} />
         <Stat label="Open cash drawers" value={openShifts.length} sub={openShifts.map((x) => s.users.find((u) => u.id === x.cashierId)?.name.split(" ")[0]).join(", ") || "None"} />
       </div>
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-3">
@@ -80,7 +80,7 @@ export default function FloristDashboard() {
           <Table>
             <thead><tr><th>Order</th><th>Customer</th><th>Items</th><th className="num">Total</th><th>Status</th></tr></thead>
             <tbody>
-              {s.onlineOrders.filter((o) => o.orgId === orgId && o.status !== "delivered").map((o) => (
+              {s.onlineOrders.filter((o) => o.orgId === orgId && o.status !== "delivered" && o.status !== "cancelled").map((o) => (
                 <tr key={o.id}>
                   <td className="font-medium">{o.number}</td>
                   <td>{o.customer}</td>

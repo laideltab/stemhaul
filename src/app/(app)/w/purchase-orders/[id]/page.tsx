@@ -1,11 +1,12 @@
 "use client";
 
 import { use } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { date, money, num, perStem } from "@/lib/format";
 import { fbe, productName } from "@/lib/selectors";
-import { Button, Card, CardHeader, Empty, LinkButton, PageHeader, Status, Table } from "@/components/ui";
+import { Button, Card, CardHeader, ConfirmButton, Empty, LinkButton, PageHeader, Qty, Status, Table } from "@/components/ui";
 
 const steps = ["draft", "sent", "confirmed", "booked", "labeled", "shipped", "received"];
 const stepLabel: Record<string, string> = { booked: "on AWB" };
@@ -13,6 +14,7 @@ const stepLabel: Record<string, string> = { booked: "on AWB" };
 export default function PODetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const s = useStore();
+  const router = useRouter();
   const po = s.pos.find((p) => p.id === id);
   if (!po) return <Empty>Purchase order not found. <Link className="text-brand underline" href="/w/purchase-orders">Back</Link></Empty>;
   const farm = s.orgs.find((o) => o.id === po.farmId);
@@ -28,6 +30,7 @@ export default function PODetail({ params }: { params: Promise<{ id: string }> }
         actions={
           <>
             <LinkButton variant="secondary" href="/w/purchase-orders">All POs</LinkButton>
+            {(po.status === "draft" || po.status === "sent") && <ConfirmButton label="Delete PO" question={`Delete ${po.number}?`} onConfirm={() => { s.deletePO(po.id); router.push("/w/purchase-orders"); }} />}
             {po.status === "draft" && <Button onClick={() => s.sendPO(po.id)}>Send to farm</Button>}
             {po.status === "confirmed" && <LinkButton href="/w/freight/add">Add to AWB</LinkButton>}
           </>
@@ -42,7 +45,8 @@ export default function PODetail({ params }: { params: Promise<{ id: string }> }
             </li>
           ))}
         </ol>
-        {po.status === "sent" && <p className="mt-3 text-sm text-muted">Waiting for {farm?.name} to confirm quantities in the farm portal, or confirm them yourself in Confirm POs.</p>}
+        {po.status === "draft" && <p className="mt-3 text-sm text-muted">Draft. Change the boxes or remove lines, then send it to {farm?.name}.</p>}
+        {po.status === "sent" && <p className="mt-3 text-sm text-muted">Waiting for {farm?.name} to confirm quantities in the farm portal, or confirm them yourself in Confirm POs. You can still change the boxes until they confirm.</p>}
         {po.status === "confirmed" && <p className="mt-3 text-sm text-muted">Confirmed. Add the lines to a master AWB in Add AWB.</p>}
         {po.status === "booked" && <p className="mt-3 text-sm text-muted">On the AWB. Labels get printed by the farm or from AWB Summary.</p>}
         {po.status === "labeled" && <p className="mt-3 text-sm text-muted">Labels printed. Close the AWB in AWB Summary when the flight leaves.</p>}
@@ -61,7 +65,11 @@ export default function PODetail({ params }: { params: Promise<{ id: string }> }
                   <tr key={i}>
                     <td className="whitespace-nowrap">{productName(s.products.find((p) => p.id === l.productId))}</td>
                     <td>{l.boxType} ({l.stemsPerBox})</td>
-                    <td className="num">{l.boxes}</td>
+                    <td className="num">
+                      {po.status === "draft" || po.status === "sent" ? (
+                        <Qty value={l.boxes} name={`box of line ${i + 1}`} removable={po.lines.length > 1} onChange={(n) => s.editPO(po.id, po.lines.map((x, j) => (j === i ? n : x.boxes)))} />
+                      ) : l.boxes}
+                    </td>
                     <td className={`num ${l.confirmedBoxes !== undefined && l.confirmedBoxes < l.boxes ? "font-medium text-bad" : ""}`}>{l.confirmedBoxes ?? "—"}</td>
                     <td className="num">{fbe(l.boxType, n).toFixed(2)}</td>
                     <td className="num">{num(n * l.stemsPerBox)}</td>

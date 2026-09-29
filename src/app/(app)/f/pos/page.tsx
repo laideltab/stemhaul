@@ -86,7 +86,7 @@ export default function POS() {
         </div>
 
         <Card className="h-fit lg:sticky lg:top-6">
-          <CardHeader title="Ticket" sub={ctype === "wholesale" ? "Wholesale prices" : "Retail prices"} />
+          <CardHeader title="Ticket" sub={ctype === "wholesale" ? "Wholesale prices" : "Retail prices"} action={cart.length ? <Button variant="ghost" className="h-8 text-bad" onClick={() => setCart([])}>Clear</Button> : undefined} />
           <div className="divide-y divide-line">
             {cart.map((c) => {
               const it = items.find((i) => i.id === c.itemId)!;

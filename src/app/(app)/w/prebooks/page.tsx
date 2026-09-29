@@ -11,7 +11,7 @@ import { askLabel, farmsOf, freeStock, lineStage, matchingProducts, prebookTotal
 import type { PrebookLine } from "@/lib/types";
 import { Badge, Button, Card, Empty, Field, inputCls, Notice, PageHeader, Table } from "@/components/ui";
 
-const tabs = [["requested", "New"], ["confirmed", "Confirmed"], ["declined", "Declined"]] as const;
+const tabs = [["requested", "New"], ["confirmed", "Confirmed"], ["declined", "Declined"], ["cancelled", "Cancelled"]] as const;
 const NEW_FARM = "__new";
 
 /** Dollar input that only commits on blur, so typing "0.4" is not reformatted mid-way. */
@@ -116,6 +116,7 @@ export default function ImporterPrebooks() {
                 {pb.weekly && <Badge tone="info">Standing order · every week</Badge>}
                 {pb.status === "confirmed" && <Badge tone="brand">Confirmed {pb.answeredAt && `${date(pb.answeredAt)} ${time(pb.answeredAt)}`}</Badge>}
                 {pb.status === "declined" && <Badge tone="bad">Could not source</Badge>}
+                {pb.status === "cancelled" && <Badge>Cancelled by {name(pb.floristOrgId)}</Badge>}
               </div>
               {pb.note && <p className="mt-2 rounded-lg bg-surface-2 px-3 py-2 text-sm"><span className="text-muted">Note from {name(pb.floristOrgId)}:</span> {pb.note}</p>}
             </div>
@@ -261,7 +262,7 @@ export default function ImporterPrebooks() {
                           <td className="num">{l.confirmedBoxes ?? 0} {l.boxType}</td>
                           <td className="num">{l.priceCents && l.confirmedBoxes ? perStem(l.priceCents) : "—"}</td>
                           <td className="num">{money((l.confirmedBoxes ?? 0) * stems(l) * (l.priceCents ?? 0))}</td>
-                          <td><Badge tone={stage.tone}>{stage.label}</Badge></td>
+                          <td>{pb.status === "cancelled" ? <Badge>Cancelled</Badge> : <Badge tone={stage.tone}>{stage.label}</Badge>}</td>
                         </tr>
                       );
                     })}

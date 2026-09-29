@@ -7,7 +7,7 @@ import { useStore, type CartLine } from "@/lib/store";
 import { money } from "@/lib/format";
 import { stockByProduct } from "@/lib/selectors";
 import { useHydrated } from "@/components/shell";
-import { Button, Card, Field, inputCls } from "@/components/ui";
+import { Button, Card, Field, inputCls, Qty } from "@/components/ui";
 
 const shops: Record<string, string> = { "mari-flowers": "org_mari" };
 
@@ -31,6 +31,7 @@ export default function WebShop({ params }: { params: Promise<{ slug: string }> 
     const reserved = s.onlineOrders.filter((o) => o.orgId === orgId && o.status === "new").flatMap((o) => o.lines).filter((l) => l.itemId === i.id).reduce((a, l) => a + l.qty, 0);
     return { ...i, available: Math.max(0, i.ready + makeable - reserved) };
   });
+  const setQty = (itemId: string, qty: number) => setCart((c) => (qty > 0 ? c.map((x) => (x.itemId === itemId ? { ...x, qty } : x)) : c.filter((x) => x.itemId !== itemId)));
   const total = cart.reduce((a, c) => a + c.qty * items.find((i) => i.id === c.itemId)!.retailCents, 0);
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -69,10 +70,19 @@ export default function WebShop({ params }: { params: Promise<{ slug: string }> 
             <p className="mt-3 text-sm">Thank you! Order <b>{done}</b> was placed. It now shows in the shop&apos;s Online Orders.</p>
           ) : (
             <>
-              <ul className="mt-3 space-y-1 text-sm">
-                {cart.map((c) => { const it = items.find((i) => i.id === c.itemId)!; return <li key={c.itemId} className="flex justify-between"><span>{c.qty}× {it.name}</span><span>{money(c.qty * it.retailCents)}</span></li>; })}
-                {!cart.length && <li className="text-muted">Empty</li>}
+              <ul className="mt-3 divide-y divide-line text-sm">
+                {cart.map((c) => {
+                  const it = items.find((i) => i.id === c.itemId)!;
+                  return (
+                    <li key={c.itemId} className="grid gap-1.5 py-2">
+                      <div className="flex justify-between gap-2"><span className="font-medium">{it.name}</span><span className="tabular-nums">{money(c.qty * it.retailCents)}</span></div>
+                      <Qty value={c.qty} max={it.available} name={it.name} onChange={(n) => setQty(c.itemId, n)} />
+                    </li>
+                  );
+                })}
+                {!cart.length && <li className="py-2 text-muted">Empty</li>}
               </ul>
+              {cart.length > 0 && <button className="mt-1 text-xs text-bad underline" onClick={() => setCart([])}>Empty bag</button>}
               <div className="mt-3 flex justify-between border-t border-line pt-3 font-medium"><span>Total</span><span>{money(total)}</span></div>
               <div className="mt-3 grid gap-2">
                 <Field label="Your name"><input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} /></Field>

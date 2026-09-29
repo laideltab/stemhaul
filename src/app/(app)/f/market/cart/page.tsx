@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Truck, X } from "lucide-react";
+import { Trash2, Truck } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { cn, date, money, num, perStem } from "@/lib/format";
 import { importerFor, shortName, salePrice } from "@/lib/market";
-import { Button, Card, CardHeader, Empty, LinkButton, PageHeader, Table } from "@/components/ui";
+import { Button, Card, CardHeader, Empty, LinkButton, PageHeader, Qty, Table } from "@/components/ui";
 
 function Choice({ on, onClick, title, sub }: { on: boolean; onClick: () => void; title: string; sub: string }) {
   return (
@@ -65,22 +65,25 @@ export default function MarketCart() {
           <div className="grid min-w-0 gap-6">
             <Card>
               <Table>
-                <thead><tr><th>Product</th><th>Farm</th><th>Box</th><th className="num">Boxes</th><th className="num">Stems</th><th className="num">Per stem</th><th className="num">Total</th><th /></tr></thead>
+                <thead><tr><th>Product</th><th>Farm</th><th>Box</th><th className="num">Boxes</th><th className="num">Stems</th><th className="num">Per stem</th><th className="num">Total</th></tr></thead>
                 <tbody>
                   {rows.map((r) => (
                     <tr key={r.l.id}>
                       <td className="font-medium">{r.p.variety} {r.p.color.toLowerCase()} {r.p.lengthCm} cm</td>
                       <td className="text-muted">{r.farm.name}</td>
                       <td>{r.l.boxType} · {r.l.stemsPerBox / r.p.stemsPerBunch} × {r.p.stemsPerBunch}</td>
-                      <td className="num">{r.c.boxes}</td>
+                      <td className="num"><Qty value={r.c.boxes} max={r.l.stockBoxes} name={`box of ${r.p.variety}`} onChange={(n) => s.setCart(r.l.id, n)} /></td>
                       <td className="num">{num(r.c.boxes * r.l.stemsPerBox)}</td>
                       <td className="num">{perStem(r.price)}</td>
                       <td className="num">{money(r.total)}</td>
-                      <td className="text-right"><button onClick={() => s.setCart(r.l.id, 0)} aria-label={`Remove ${r.p.variety}`} className="rounded p-1 text-muted hover:bg-surface-2"><X size={15} /></button></td>
                     </tr>
                   ))}
                 </tbody>
               </Table>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-2 text-sm">
+                <span className="text-muted">Change boxes with − and +, or remove a line with the trash can.</span>
+                <Button variant="ghost" className="text-bad" onClick={() => rows.forEach((r) => s.setCart(r.l.id, 0))}><Trash2 size={15} /> Empty cart</Button>
+              </div>
             </Card>
             <Card>
               <CardHeader title="How it gets to you" />
