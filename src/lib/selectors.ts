@@ -17,3 +17,10 @@ export function shiftTotals(d: Pick<Data, "sales">, shift: Shift) {
   const diff = shift.countedCashCents === undefined ? undefined : shift.countedCashCents - expectedCash;
   return { count: sales.length, ...by, total: by.cash + by.card + by.account, expectedCash, diff };
 }
+
+/** Full box equivalents, the unit airlines and agencies bill by. */
+export const FBE: Record<string, number> = { FB: 1, HB: 0.5, QB: 0.25, EB: 0.125 };
+export const fbe = (boxType: string, boxes: number) => FBE[boxType] * boxes;
+
+/** Outer box size in cm (length x width x height), as printed on the label. */
+export const BOX_SIZE: Record<string, string> = { FB: "105 x 50 x 26", HB: "105 x 50 x 13", QB: "105 x 25 x 13", EB: "105 x 25 x 7" };

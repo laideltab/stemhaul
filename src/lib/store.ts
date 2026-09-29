@@ -3,12 +3,24 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { buildSeed, type Data } from "./seed";
-import type { BoxType, OnlineOrder, Payment, POLine, QBBatch, Receipt, Sale } from "./types";
+import type { Box, InvoicePayment, OnlineOrder, Payment, POLine, QBBatch, Receipt, Sale } from "./types";
 import { stockByProduct } from "./selectors";
 
 export interface Session {
   orgId: string;
   userId: string;
+}
+
+export interface AwbInput {
+  origin: string;
+  shipDate: string;
+  number: string;
+  airline: string;
+  agencyId?: string;
+}
+export interface LineRef {
+  poId: string;
+  lineIndex: number;
 }
 
 export interface CartLine {
@@ -25,13 +37,15 @@ interface Actions {
 
   createPO: (farmId: string, shipDate: string, lines: POLine[], send: boolean) => string;
   sendPO: (poId: string) => void;
-  farmConfirmPO: (poId: string) => void;
-  farmPrintLabels: (poId: string) => void;
-  bookFreight: (poIds: string[], agencyId: string | undefined, airline: string, flightDate: string, masterNumber?: string) => void;
+  farmConfirmPO: (poId: string, confirmed: number[]) => void;
+  assignAwb: (awb: AwbInput, lines: LineRef[]) => Result;
+  removeFromAwb: (lines: LineRef[]) => void;
+  printLabels: (opts: { poId?: string; awbId?: string }) => void;
+  closeAwb: (awbId: string) => void;
   scanReceive: (code: string) => Result;
   markBox: (boxId: string, status: "missing" | "damaged" | "received") => void;
   deliverBoxes: (customerId: string, boxIds: string[], pricePerStemCents: Record<string, number>) => string;
-  recordPayment: (invoiceId: string, cents: number) => void;
+  recordPayment: (invoiceId: string, payment: Omit<InvoicePayment, "id">) => void;
   payBill: (billId: string) => void;
 
   floristScanBox: (code: string) => Result;
@@ -113,65 +127,108 @@ export const useStore = create<Store>()(
           return id;
         },
         sendPO: (poId) => set((s) => ({ pos: s.pos.map((p) => (p.id === poId ? { ...p, status: "sent" } : p)) })),
-        farmConfirmPO: (poId) => set((s) => ({ pos: s.pos.map((p) => (p.id === poId ? { ...p, status: "confirmed" } : p)) })),
-        farmPrintLabels: (poId) => {
-          const po = get().pos.find((p) => p.id === poId)!;
-          if (get().boxes.some((b) => b.poId === poId)) return;
-          const num = po.number.replace("PO-", "");
-          const newBoxes = po.lines.flatMap((l, li) =>
-            Array.from({ length: l.boxes }, () => {
-              const n = next("box");
-              return {
-                id: `bx_${n}`, code: `LF${num}${String(n).padStart(4, "0")}`, poId, lineIndex: li,
-                productId: l.productId, boxType: l.boxType as BoxType, stems: l.stemsPerBox,
-                costPerStemCents: l.pricePerStemCents, status: "labeled" as const,
-              };
+        farmConfirmPO: (poId, confirmed) =>
+          set((s) => ({
+            pos: s.pos.map((p) =>
+              p.id === poId ? { ...p, status: "confirmed", lines: p.lines.map((l, i) => ({ ...l, confirmedBoxes: Math.max(0, Math.min(l.boxes, confirmed[i] ?? l.boxes)) })) } : p,
+            ),
+          })),
+        assignAwb: (input, refs) => {
+          if (!refs.length) return { ok: false, message: "Select at least one line." };
+          const number = input.number.trim();
+          if (!/^\d{3}-?\d{4}-?\d{4}$/.test(number)) return { ok: false, message: "Type the master AWB as 11 digits, e.g. 992-0111-3151." };
+          const s = get();
+          let awb = s.awbs.find((a) => a.number === number);
+          if (awb && awb.status !== "open") return { ok: false, message: `AWB ${number} is already closed.` };
+          if (!awb) {
+            awb = { id: `awb_${next("awb")}`, number, airline: input.airline, agencyId: input.agencyId, flightDate: input.shipDate, origin: input.origin, status: "open" };
+          }
+          const awbId = awb.id;
+          // One house AWB per purchase order inside this master.
+          const houses: Record<string, string> = {};
+          for (const r of refs) {
+            const existing = s.pos.find((p) => p.id === r.poId)!.lines.find((l) => l.awbId === awbId)?.hawb;
+            houses[r.poId] ??= existing ?? `${new Date().getFullYear()}-${String(next("hawb")).padStart(6, "0")}`;
+          }
+          const created = awb;
+          set((st) => {
+            const pos = st.pos.map((p) => {
+              const mine = refs.filter((r) => r.poId === p.id).map((r) => r.lineIndex);
+              if (!mine.length) return p;
+              const lines = p.lines.map((l, i) => (mine.includes(i) ? { ...l, awbId, hawb: houses[p.id] } : l));
+              const allBooked = lines.every((l) => (l.confirmedBoxes ?? 0) === 0 || l.awbId);
+              return { ...p, lines, status: allBooked && p.status === "confirmed" ? ("booked" as const) : p.status };
+            });
+            return { pos, awbs: st.awbs.some((a) => a.id === awbId) ? st.awbs : [created, ...st.awbs] };
+          });
+          return { ok: true, message: `Added ${refs.length} line${refs.length > 1 ? "s" : ""} to AWB ${number}.` };
+        },
+        removeFromAwb: (refs) =>
+          set((st) => ({
+            pos: st.pos.map((p) => {
+              const mine = refs.filter((r) => r.poId === p.id).map((r) => r.lineIndex);
+              if (!mine.length) return p;
+              if (st.boxes.some((b) => b.poId === p.id && mine.includes(b.lineIndex))) return p; // labels already printed
+              return { ...p, status: p.status === "booked" ? "confirmed" : p.status, lines: p.lines.map((l, i) => (mine.includes(i) ? { ...l, awbId: undefined, hawb: undefined } : l)) };
             }),
+          })),
+        printLabels: ({ poId, awbId }) => {
+          const s = get();
+          const targets = s.pos.flatMap((p) =>
+            p.lines
+              .map((l, li) => ({ p, l, li }))
+              .filter(({ p: po, l }) => l.awbId && (poId ? po.id === poId : l.awbId === awbId)),
           );
-          set((s) => ({
-            boxes: [...s.boxes, ...newBoxes],
-            pos: s.pos.map((p) => (p.id === poId ? { ...p, status: "labeled" } : p)),
-          }));
+          const newBoxes: Box[] = [];
+          for (const { p, l, li } of targets) {
+            const have = s.boxes.filter((b) => b.poId === p.id && b.lineIndex === li).length;
+            for (let i = have; i < (l.confirmedBoxes ?? 0); i++) {
+              const n = next("box");
+              newBoxes.push({
+                id: `bx_${n}`, code: `LF${558465000 + n * 7}`, poId: p.id, lineIndex: li, productId: l.productId, boxType: l.boxType,
+                stems: l.stemsPerBox, costPerStemCents: l.pricePerStemCents, status: "labeled", hawb: l.hawb, awbId: l.awbId,
+                lot: next("lot"), customerId: l.customerId,
+              });
+            }
+          }
+          set((st) => {
+            const boxes = [...st.boxes, ...newBoxes];
+            const pos = st.pos.map((p) => {
+              if (p.status !== "booked") return p;
+              const done = p.lines.every((l, li) => boxes.filter((b) => b.poId === p.id && b.lineIndex === li).length >= (l.confirmedBoxes ?? 0));
+              return done ? { ...p, status: "labeled" as const } : p;
+            });
+            return { boxes, pos };
+          });
         },
-        bookFreight: (poIds, agencyId, airline, flightDate, masterNumber) => {
-          const n = next("awb");
-          const id = `awb_${n}`;
-          const houses = poIds.map((poId) => ({
-            hawb: `HAWB-${next("hawb")}`,
-            poId,
-            pieces: get().boxes.filter((b) => b.poId === poId).length,
-          }));
-          const prefix = airline.startsWith("Avianca") ? "729" : airline.startsWith("LATAM") ? "045" : "406";
-          set((s) => ({
-            awbs: [
-              { id, number: masterNumber?.trim() || `${prefix}-${48300000 + n * 173}`, airline, agencyId, flightDate, origin: airline.startsWith("Avianca") ? "UIO" : "BOG", status: "booked", houses },
-              ...s.awbs,
-            ],
-            pos: s.pos.map((p) => (poIds.includes(p.id) ? { ...p, status: "shipped", awbId: id } : p)),
-            boxes: s.boxes.map((b) => {
-              const h = houses.find((x) => x.poId === b.poId);
-              return h ? { ...b, status: "in_transit", hawb: h.hawb } : b;
-            }),
-          }));
-        },
+        closeAwb: (awbId) =>
+          set((st) => {
+            const poIds = new Set(st.boxes.filter((b) => b.awbId === awbId).map((b) => b.poId));
+            return {
+              awbs: st.awbs.map((a) => (a.id === awbId ? { ...a, status: "closed" } : a)),
+              boxes: st.boxes.map((b) => (b.awbId === awbId && b.status === "labeled" ? { ...b, status: "in_transit" } : b)),
+              pos: st.pos.map((p) => (poIds.has(p.id) && p.status === "labeled" ? { ...p, status: "shipped" } : p)),
+            };
+          }),
         scanReceive: (code) => {
           const s = get();
           const box = s.boxes.find((b) => b.code === code.trim().toUpperCase());
           if (!box) return { ok: false, message: `No box with label ${code}.` };
           if (box.status === "received" || box.status === "delivered") return { ok: false, message: `${box.code} was already scanned.` };
-          if (box.status === "labeled") return { ok: false, message: `${box.code} has not been shipped yet.` };
+          if (box.status === "labeled") return { ok: false, message: `${box.code} is not on a closed AWB yet.` };
           set((st) => {
             const boxes = st.boxes.map((b) => (b.id === box.id ? { ...b, status: "received" as const } : b));
-            const pending = boxes.filter((b) => b.poId === box.poId && b.status === "in_transit").length;
-            const po = st.pos.find((p) => p.id === box.poId)!;
+            const poPending = boxes.some((b) => b.poId === box.poId && b.status === "in_transit");
+            const awbPending = boxes.some((b) => b.awbId === box.awbId && b.status === "in_transit");
             return {
               boxes,
-              pos: pending === 0 ? st.pos.map((p) => (p.id === po.id ? { ...p, status: "received" } : p)) : st.pos,
-              awbs: st.awbs.map((a) => (a.id === po.awbId ? { ...a, status: "arrived" } : a)),
+              pos: poPending ? st.pos : st.pos.map((p) => (p.id === box.poId ? { ...p, status: "received" } : p)),
+              awbs: awbPending ? st.awbs : st.awbs.map((a) => (a.id === box.awbId ? { ...a, status: "arrived" } : a)),
             };
           });
           const p = s.products.find((x) => x.id === box.productId)!;
-          return { ok: true, message: `${box.code} · ${box.boxType} ${p.species} ${p.variety} ${p.lengthCm}cm · ${box.stems} stems` };
+          const cust = s.contacts.find((c) => c.id === box.customerId);
+          return { ok: true, message: `${box.code} · ${box.boxType} ${p.species} ${p.variety} ${p.lengthCm}cm · ${box.stems} stems · ${cust ? `for ${cust.name}` : "stock"}` };
         },
         markBox: (boxId, status) => set((s) => ({ boxes: s.boxes.map((b) => (b.id === boxId ? { ...b, status } : b)) })),
         deliverBoxes: (customerId, boxIds, price) => {
@@ -187,15 +244,21 @@ export const useStore = create<Store>()(
           due.setDate(due.getDate() + 15);
           set((st) => ({
             invoices: [
-              { id, number: `INV-${n}`, wholesalerId: me().orgId, customerId, date: today(), dueDate: due.toISOString().slice(0, 10), lines, totalCents: lines.reduce((a, l) => a + l.stems * l.pricePerStemCents, 0), paidCents: 0 },
+              { id, number: `INV-${n}`, wholesalerId: me().orgId, customerId, date: today(), dueDate: due.toISOString().slice(0, 10), lines, totalCents: lines.reduce((a, l) => a + l.stems * l.pricePerStemCents, 0), paidCents: 0, payments: [] },
               ...st.invoices,
             ],
             boxes: st.boxes.map((b) => (boxIds.includes(b.id) ? { ...b, status: "delivered", customerId, invoiceId: id } : b)),
           }));
           return id;
         },
-        recordPayment: (invoiceId, cents) =>
-          set((s) => ({ invoices: s.invoices.map((i) => (i.id === invoiceId ? { ...i, paidCents: Math.min(i.totalCents, i.paidCents + cents) } : i)) })),
+        recordPayment: (invoiceId, payment) => {
+          const pay = { ...payment, id: `pay_${next("pay")}` };
+          set((s) => ({
+            invoices: s.invoices.map((i) =>
+              i.id === invoiceId ? { ...i, payments: [...i.payments, pay], paidCents: Math.min(i.totalCents, i.paidCents + payment.amountCents) } : i,
+            ),
+          }));
+        },
         payBill: (billId) => set((s) => ({ bills: s.bills.map((b) => (b.id === billId ? { ...b, paidCents: b.totalCents } : b)) })),
 
         floristScanBox: (code) => {
@@ -203,7 +266,7 @@ export const useStore = create<Store>()(
           const orgId = me().orgId;
           const box = s.boxes.find((b) => b.code === code.trim().toUpperCase());
           const linked = s.contacts.filter((c) => c.linkedOrgId === orgId && c.kind === "customer").map((c) => c.id);
-          if (!box || !box.customerId || !linked.includes(box.customerId)) return { ok: false, message: `${code} is not on any delivery to your shop.` };
+          if (!box || box.status !== "delivered" || !box.customerId || !linked.includes(box.customerId)) return { ok: false, message: `${code} is not on any delivery to your shop.` };
           if (box.floristReceivedAt) return { ok: false, message: `${box.code} was already received.` };
           const inv = s.invoices.find((i) => i.id === box.invoiceId)!;
           const line = inv.lines.find((l) => l.boxId === box.id)!;
@@ -338,6 +401,6 @@ export const useStore = create<Store>()(
         },
       };
     },
-    { name: "stemhaul-demo-v1" },
+    { name: "stemhaul-demo-v2" },
   ),
 );

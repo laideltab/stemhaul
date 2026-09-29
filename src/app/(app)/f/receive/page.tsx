@@ -15,7 +15,7 @@ export default function ReceiveBoxes() {
   const [res, setRes] = useState<{ ok: boolean; message: string } | null>(null);
   const ref = useRef<HTMLInputElement>(null);
   const linked = s.contacts.filter((c) => c.linkedOrgId === orgId && c.kind === "customer").map((c) => c.id);
-  const incoming = s.boxes.filter((b) => b.customerId && linked.includes(b.customerId) && !b.floristReceivedAt);
+  const incoming = s.boxes.filter((b) => b.status === "delivered" && b.customerId && linked.includes(b.customerId) && !b.floristReceivedAt);
   const vendors = s.contacts.filter((c) => c.ownerOrgId === orgId && c.kind === "vendor" && !c.linkedOrgId);
   const [supplier, setSupplier] = useState(vendors[0]?.name ?? "");
   const [lines, setLines] = useState<Receipt["lines"]>([{ productId: "p_gyp", stems: 50, costPerStemCents: 35 }]);

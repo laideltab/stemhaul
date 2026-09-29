@@ -38,7 +38,7 @@ export default function FloristDashboard() {
   const todays = sales.filter((x) => isToday(x.at));
   const stock = stockByProduct(s, orgId);
   const linked = s.contacts.filter((c) => c.linkedOrgId === orgId && c.kind === "customer").map((c) => c.id);
-  const incoming = s.boxes.filter((b) => b.customerId && linked.includes(b.customerId) && !b.floristReceivedAt);
+  const incoming = s.boxes.filter((b) => b.status === "delivered" && b.customerId && linked.includes(b.customerId) && !b.floristReceivedAt);
   const low = s.products.filter((p) => (stock[p.id] ?? 0) < 50).sort((a, b) => (stock[a.id] ?? 0) - (stock[b.id] ?? 0));
   const newWeb = s.onlineOrders.filter((o) => o.orgId === orgId && o.status === "new");
   const openShifts = s.shifts.filter((x) => x.orgId === orgId && !x.closedAt);

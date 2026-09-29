@@ -13,8 +13,8 @@ export default function ScanReceiving() {
   const [code, setCode] = useState("");
   const [log, setLog] = useState<{ ok: boolean; message: string; at: string }[]>([]);
   const ref = useRef<HTMLInputElement>(null);
-  const shipped = s.pos.filter((p) => p.wholesalerId === orgId && (p.status === "shipped" || p.status === "received") && p.awbId);
-  const pending = shipped.filter((p) => s.boxes.some((b) => b.poId === p.id && b.status === "in_transit"));
+  const myPoIds = new Set(s.pos.filter((p) => p.wholesalerId === orgId).map((p) => p.id));
+  const pending = s.awbs.filter((a) => s.boxes.some((b) => b.awbId === a.id && myPoIds.has(b.poId) && b.status === "in_transit"));
 
   const scan = (c: string) => {
     if (!c.trim()) return;
@@ -33,31 +33,32 @@ export default function ScanReceiving() {
             <form onSubmit={(e) => { e.preventDefault(); scan(code); }} className="flex gap-2">
               <div className="relative flex-1">
                 <ScanLine size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-                <input ref={ref} autoFocus value={code} onChange={(e) => setCode(e.target.value)} placeholder="Scan or type a box label, e.g. LF10470050" className={cn(inputCls, "h-11 pl-10 font-mono text-base")} />
+                <input ref={ref} autoFocus value={code} onChange={(e) => setCode(e.target.value)} placeholder="Scan or type a box label, e.g. LF558465007" className={cn(inputCls, "h-11 pl-10 font-mono text-base")} />
               </div>
               <Button className="h-11">Receive</Button>
             </form>
           </Card>
 
-          {pending.map((p) => {
-            const awb = s.awbs.find((a) => a.id === p.awbId)!;
-            const boxes = s.boxes.filter((b) => b.poId === p.id);
+          {pending.map((awb) => {
+            const boxes = s.boxes.filter((b) => b.awbId === awb.id);
             const done = boxes.filter((b) => b.status !== "in_transit" && b.status !== "labeled").length;
             return (
-              <Card key={p.id}>
+              <Card key={awb.id}>
                 <CardHeader
-                  title={<>{p.number} · <span className="font-mono text-sm">{awb.number}</span></>}
-                  sub={`${s.orgs.find((o) => o.id === p.farmId)?.name} · ${awb.airline} · ${done} of ${boxes.length} boxes checked`}
+                  title={<>AWB <span className="font-mono text-sm">{awb.number}</span></>}
+                  sub={`${awb.origin} → MIA · ${awb.airline} · ${done} of ${boxes.length} boxes checked`}
                 />
                 <div className="h-1.5 bg-line"><div className="h-full bg-brand transition-all" style={{ width: `${(done / boxes.length) * 100}%` }} /></div>
                 <Table>
-                  <thead><tr><th>Label</th><th>Product</th><th>Box</th><th>Status</th><th /></tr></thead>
+                  <thead><tr><th>Label</th><th>House</th><th>Product</th><th>Box</th><th>Customer</th><th>Status</th><th /></tr></thead>
                   <tbody>
                     {boxes.map((b) => (
                       <tr key={b.id}>
                         <td className="font-mono text-xs">{b.code}</td>
+                        <td className="font-mono text-xs">{b.hawb}</td>
                         <td>{productName(s.products.find((x) => x.id === b.productId))}</td>
                         <td>{b.boxType} · {b.stems}</td>
+                        <td className="font-mono text-xs">{s.contacts.find((c) => c.id === b.customerId)?.code ?? "STOCK"}</td>
                         <td><Status value={b.status} /></td>
                         <td className="text-right">
                           {b.status === "in_transit" && (
@@ -75,7 +76,7 @@ export default function ScanReceiving() {
               </Card>
             );
           })}
-          {!pending.length && <Card><Empty>No boxes in transit. Book freight to see them here.</Empty></Card>}
+          {!pending.length && <Card><Empty>No boxes in the air. Close an AWB in AWB Summary to see its boxes here.</Empty></Card>}
         </div>
 
         <Card className="h-fit">

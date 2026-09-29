@@ -39,7 +39,7 @@ export default function WholesaleDashboard() {
             <thead><tr><th>PO</th><th>Farm</th><th>AWB</th><th className="num">Boxes</th></tr></thead>
             <tbody>
               {pos.filter((p) => p.status === "shipped").map((p) => {
-                const awb = s.awbs.find((a) => a.id === p.awbId);
+                const awb = s.awbs.find((a) => a.id === p.lines.find((l) => l.awbId)?.awbId);
                 return (
                   <tr key={p.id}>
                     <td><Link className="font-medium text-brand hover:underline" href={`/w/purchase-orders/${p.id}`}>{p.number}</Link></td>

@@ -8,6 +8,9 @@ import POs from "@/app/(app)/w/purchase-orders/page";
 import NewPO from "@/app/(app)/w/purchase-orders/new/page";
 import PODetail from "@/app/(app)/w/purchase-orders/[id]/page";
 import Freight from "@/app/(app)/w/freight/page";
+import AddAwb from "@/app/(app)/w/freight/add/page";
+import AwbLabels from "@/app/(app)/w/freight/labels/[id]/page";
+import ConfirmPOs from "@/app/(app)/w/purchase-orders/confirm/page";
 import Receiving from "@/app/(app)/w/receiving/page";
 import Deliveries from "@/app/(app)/w/deliveries/page";
 import Accounts from "@/app/(app)/w/accounts/page";
@@ -31,8 +34,11 @@ const routes: [RegExp, Page, boolean, string?][] = [
   [/^\/w$/, W as Page, true],
   [/^\/w\/purchase-orders$/, POs as Page, true],
   [/^\/w\/purchase-orders\/new$/, NewPO as Page, true],
+  [/^\/w\/purchase-orders\/confirm$/, ConfirmPOs as Page, true],
   [/^\/w\/purchase-orders\/([^/]+)$/, PODetail as Page, true, "id"],
   [/^\/w\/freight$/, Freight as Page, true],
+  [/^\/w\/freight\/add$/, AddAwb as Page, true],
+  [/^\/w\/freight\/labels\/([^/]+)$/, AwbLabels as Page, true, "id"],
   [/^\/w\/receiving$/, Receiving as Page, true],
   [/^\/w\/deliveries$/, Deliveries as Page, true],
   [/^\/w\/accounts$/, Accounts as Page, true],

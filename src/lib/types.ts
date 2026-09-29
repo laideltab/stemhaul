@@ -8,6 +8,12 @@ export interface Org {
   name: string;
   kind: OrgKind;
   city: string;
+  /** Short code printed on labels (vendor code for farms). */
+  code: string;
+  address?: string;
+  phone?: string;
+  /** Airport code farms ship from. */
+  origin?: string;
   modules: ModuleKey[];
   plan: "Starter" | "Pro" | "Enterprise" | "Farm (free)";
   billing: "active" | "trial" | "past_due";
@@ -45,9 +51,12 @@ export interface Contact {
   /** When this contact is itself a Stemhaul account (e.g. a licensed florist). */
   linkedOrgId?: string;
   terms?: string;
+  /** Customer code (also the mark code printed on each box). */
+  code?: string;
 }
 
-export type POStatus = "draft" | "sent" | "confirmed" | "labeled" | "shipped" | "received";
+// Komet order: the farm confirms, the importer adds the lines to an AWB, labels are printed, the AWB closes and flies.
+export type POStatus = "draft" | "sent" | "confirmed" | "booked" | "labeled" | "shipped" | "received";
 
 export interface POLine {
   productId: string;
@@ -55,6 +64,12 @@ export interface POLine {
   boxes: number;
   stemsPerBox: number;
   pricePerStemCents: number;
+  /** Customer the boxes are already sold to (prebook). Empty means stock for the warehouse. */
+  customerId?: string;
+  /** Boxes the farm confirmed. Undefined until the farm answers. */
+  confirmedBoxes?: number;
+  awbId?: string;
+  hawb?: string;
 }
 
 export interface PurchaseOrder {
@@ -65,7 +80,6 @@ export interface PurchaseOrder {
   shipDate: string;
   status: POStatus;
   lines: POLine[];
-  awbId?: string;
   createdAt: string;
 }
 
@@ -82,6 +96,10 @@ export interface Box {
   costPerStemCents: number;
   status: BoxStatus;
   hawb?: string;
+  awbId?: string;
+  /** Lot number printed on the label. */
+  lot: number;
+  /** Customer the box was bought for (set at purchase), or the one it was delivered to from stock. */
   customerId?: string;
   invoiceId?: string;
   /** Set when a licensed florist has scanned it in. */
@@ -96,8 +114,19 @@ export interface MasterAWB {
   agencyId?: string;
   flightDate: string;
   origin: string;
-  status: "booked" | "departed" | "arrived";
-  houses: { hawb: string; poId: string; pieces: number }[];
+  /** open: still adding boxes and printing labels; closed: flown; arrived: all boxes scanned in Miami. */
+  status: "open" | "closed" | "arrived";
+}
+
+export type PaymentMethod = "Cash" | "Check" | "Zelle" | "Wire" | "Credit card" | "Cash shipping";
+
+export interface InvoicePayment {
+  id: string;
+  date: string;
+  amountCents: number;
+  method: PaymentMethod;
+  reference: string;
+  note?: string;
 }
 
 export interface Invoice {
@@ -110,6 +139,7 @@ export interface Invoice {
   lines: { boxId: string; description: string; stems: number; pricePerStemCents: number }[];
   totalCents: number;
   paidCents: number;
+  payments: InvoicePayment[];
 }
 
 export interface Bill {

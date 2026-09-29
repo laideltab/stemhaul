@@ -66,7 +66,7 @@ export function Badge({ tone = "neutral", children }: { tone?: Tone; children: R
 const statusTone: Record<string, Tone> = {
   draft: "neutral", sent: "info", confirmed: "brand", labeled: "warn", shipped: "info", received: "good",
   in_transit: "info", delivered: "good", missing: "bad", damaged: "bad",
-  booked: "neutral", departed: "info", arrived: "good",
+  booked: "brand", departed: "info", arrived: "good", closed: "info",
   new: "warn", preparing: "info", ready: "brand",
   paid: "good", open: "warn", overdue: "bad", partial: "info",
   active: "good", trial: "info", past_due: "bad", error: "bad",

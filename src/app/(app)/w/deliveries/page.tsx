@@ -13,11 +13,17 @@ export default function Deliveries() {
   const orgId = s.session!.orgId;
   const customers = s.contacts.filter((c) => c.ownerOrgId === orgId && c.kind === "customer");
   const [customerId, setCustomerId] = useState(customers[0]?.id ?? "");
-  const [sel, setSel] = useState<string[]>([]);
+  const [sel, setSel] = useState<string[]>(() => s.boxes.filter((b) => b.status === "received" && b.customerId === (customers[0]?.id ?? "")).map((b) => b.id));
   const [prices, setPrices] = useState<Record<string, number>>({});
   const [msg, setMsg] = useState<{ ok: boolean; message: string } | null>(null);
   const poIds = new Set(s.pos.filter((p) => p.wholesalerId === orgId).map((p) => p.id));
-  const available = s.boxes.filter((b) => poIds.has(b.poId) && b.status === "received");
+  const inWarehouse = s.boxes.filter((b) => poIds.has(b.poId) && b.status === "received");
+  const presoldFor = (cid: string) => inWarehouse.filter((b) => b.customerId === cid).map((b) => b.id);
+  // Boxes bought for this customer, plus unsold stock that can be added.
+  const available = inWarehouse
+    .filter((b) => b.customerId === customerId || !b.customerId)
+    .sort((a, b) => Number(!!b.customerId) - Number(!!a.customerId));
+  const waiting = customers.map((c) => ({ c, n: presoldFor(c.id).length })).filter((x) => x.n > 0);
   const selected = available.filter((b) => sel.includes(b.id));
 
   const defaults: Record<string, number> = {};
@@ -40,27 +46,38 @@ export default function Deliveries() {
 
   return (
     <>
-      <PageHeader title="Deliveries & Invoices" sub="Assign boxes from the warehouse to a customer. Delivering creates the invoice (accounts receivable)." />
+      <PageHeader title="Deliveries & Invoices" sub="Boxes bought for a customer come pre-selected; you can add stock boxes. Delivering creates the invoice (accounts receivable)." />
       <Card className="mb-6">
         <CardHeader title="New delivery" />
         <div className="grid gap-4 p-4">
           <div className="flex flex-wrap items-end gap-3">
             <Field label="Customer" className="min-w-64">
-              <select className={inputCls} value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
-                {customers.map((c) => <option key={c.id} value={c.id}>{c.name}{c.linkedOrgId ? " (on Stemhaul)" : ""}</option>)}
+              <select className={inputCls} value={customerId} onChange={(e) => { setCustomerId(e.target.value); setSel(presoldFor(e.target.value)); setMsg(null); }}>
+                {customers.map((c) => <option key={c.id} value={c.id}>{c.code} · {c.name}{c.linkedOrgId ? " (on Stemhaul)" : ""}</option>)}
               </select>
             </Field>
             {cust?.linkedOrgId && <Badge tone="brand">Boxes will appear in {cust.name}&apos;s Receive Boxes</Badge>}
           </div>
+          {waiting.length > 0 && (
+            <div className="flex flex-wrap gap-2 text-sm">
+              <span className="text-muted">Pre-sold boxes waiting:</span>
+              {waiting.map(({ c, n }) => (
+                <button key={c.id} onClick={() => { setCustomerId(c.id); setSel(presoldFor(c.id)); setMsg(null); }} className={`rounded-full border px-2.5 py-0.5 ${c.id === customerId ? "border-brand bg-brand-soft text-brand" : "border-line hover:bg-surface-2"}`}>
+                  {c.name} · {n}
+                </button>
+              ))}
+            </div>
+          )}
           <Notice result={msg} />
           {available.length ? (
             <Table className="rounded-lg border border-line">
-              <thead><tr><th><input type="checkbox" checked={sel.length === available.length} onChange={(e) => setSel(e.target.checked ? available.map((b) => b.id) : [])} aria-label="Select all" /></th><th>Label</th><th>Product</th><th>Box</th><th className="num">Stems</th><th className="num">Cost/stem</th><th className="num">Price/stem</th></tr></thead>
+              <thead><tr><th><input type="checkbox" checked={sel.length === available.length} onChange={(e) => setSel(e.target.checked ? available.map((b) => b.id) : [])} aria-label="Select all" /></th><th>Label</th><th>For</th><th>Product</th><th>Box</th><th className="num">Stems</th><th className="num">Cost/stem</th><th className="num">Price/stem</th></tr></thead>
               <tbody>
                 {available.map((b) => (
                   <tr key={b.id}>
                     <td><input type="checkbox" checked={sel.includes(b.id)} onChange={(e) => setSel(e.target.checked ? [...sel, b.id] : sel.filter((x) => x !== b.id))} aria-label={`Select ${b.code}`} /></td>
                     <td className="font-mono text-xs">{b.code}</td>
+                    <td>{b.customerId ? <Badge tone="brand">Pre-sold</Badge> : <Badge>Stock</Badge>}</td>
                     <td>{productName(s.products.find((p) => p.id === b.productId))}</td>
                     <td>{b.boxType}</td>
                     <td className="num">{b.stems}</td>
@@ -72,7 +89,7 @@ export default function Deliveries() {
                 ))}
               </tbody>
             </Table>
-          ) : <Empty>No boxes in the warehouse. Scan boxes in at Scan Receiving first.</Empty>}
+          ) : <Empty>Nothing in the warehouse for this customer. Scan boxes in at Scan Receiving first.</Empty>}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="text-sm text-muted">{selected.length} boxes · {num(selected.reduce((a, b) => a + b.stems, 0))} stems · <b className="text-fg">{money(total)}</b></span>
             <Button disabled={!selected.length || !customerId} onClick={deliver}>Deliver and invoice</Button>

@@ -1,91 +1,116 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
+import { ChevronDown, ChevronRight, Plus } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { date } from "@/lib/format";
-import { Button, Card, CardHeader, Empty, Field, inputCls, PageHeader, Status, Table } from "@/components/ui";
+import { date, money } from "@/lib/format";
+import { fbe, productName } from "@/lib/selectors";
+import { Button, Card, Empty, LinkButton, PageHeader, Status, Table } from "@/components/ui";
+import { POTabs } from "@/components/po-tabs";
 
-const airlines = ["Avianca Cargo", "LATAM Cargo", "Atlas Air"];
-
-export default function Freight() {
+export default function AWBSummary() {
   const s = useStore();
   const orgId = s.session!.orgId;
-  const labeled = s.pos.filter((p) => p.wholesalerId === orgId && p.status === "labeled");
-  const agencies = s.contacts.filter((c) => c.ownerOrgId === orgId && c.kind === "agency");
-  const [sel, setSel] = useState<string[]>([]);
-  const [agencyId, setAgencyId] = useState(agencies[0]?.id ?? "");
-  const [direct, setDirect] = useState(false);
-  const [master, setMaster] = useState("");
-  const [airline, setAirline] = useState(airlines[0]);
-  const [flight, setFlight] = useState(new Date().toISOString().slice(0, 10));
-  const poIds = new Set(s.pos.filter((p) => p.wholesalerId === orgId).map((p) => p.id));
-  const awbs = s.awbs.filter((a) => a.houses.some((h) => poIds.has(h.poId)));
+  const [open, setOpen] = useState<string | null>(null);
+  const myPos = s.pos.filter((p) => p.wholesalerId === orgId);
+  const awbs = s.awbs
+    .filter((a) => myPos.some((p) => p.lines.some((l) => l.awbId === a.id)))
+    .sort((a, b) => b.flightDate.localeCompare(a.flightDate));
 
   return (
     <>
-      <PageHeader title="Freight & AWBs" sub="Book cargo through a cargo agency or directly with the airline. Each purchase order gets a house AWB under the master AWB." />
-      <Card className="mb-6">
-        <CardHeader title="Book freight" sub="Purchase orders with labels printed and not booked yet" />
-        {labeled.length ? (
-          <div className="grid gap-4 p-4">
-            <div className="grid gap-2">
-              {labeled.map((p) => {
-                const n = s.boxes.filter((b) => b.poId === p.id).length;
-                return (
-                  <label key={p.id} className="flex items-center gap-3 rounded-lg border border-line px-3 py-2 text-sm">
-                    <input type="checkbox" checked={sel.includes(p.id)} onChange={(e) => setSel(e.target.checked ? [...sel, p.id] : sel.filter((x) => x !== p.id))} />
-                    <span className="font-medium">{p.number}</span>
-                    <span className="text-muted">{s.orgs.find((o) => o.id === p.farmId)?.name} · {n} boxes · ships {date(p.shipDate)}</span>
-                  </label>
-                );
-              })}
-            </div>
-            <div className="inline-flex w-fit rounded-lg border border-line bg-surface p-1 text-sm">
-              <button onClick={() => setDirect(false)} className={`rounded-md px-3 py-1.5 ${!direct ? "bg-brand text-white" : "text-muted"}`}>Through a cargo agency</button>
-              <button onClick={() => setDirect(true)} className={`rounded-md px-3 py-1.5 ${direct ? "bg-brand text-white" : "text-muted"}`}>Direct with the airline</button>
-            </div>
-            {direct && <p className="text-sm text-muted">No agency: you book the space with the airline yourself and type the master AWB number it gives you. Stemhaul still creates one house reference per purchase order so boxes can be tracked and scanned.</p>}
-            <div className="grid gap-3 sm:grid-cols-4 sm:items-end">
-              {direct ? (
-                <Field label="Master AWB from the airline">
-                  <input className={`${inputCls} font-mono`} placeholder="e.g. 729-12345675" value={master} onChange={(e) => setMaster(e.target.value)} />
-                </Field>
-              ) : (
-                <Field label="Cargo agency">
-                  <select className={inputCls} value={agencyId} onChange={(e) => setAgencyId(e.target.value)}>
-                    {agencies.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-                  </select>
-                </Field>
-              )}
-              <Field label="Airline">
-                <select className={inputCls} value={airline} onChange={(e) => setAirline(e.target.value)}>{airlines.map((a) => <option key={a}>{a}</option>)}</select>
-              </Field>
-              <Field label="Flight date"><input type="date" className={inputCls} value={flight} onChange={(e) => setFlight(e.target.value)} /></Field>
-              <Button disabled={!sel.length} onClick={() => { s.bookFreight(sel, direct ? undefined : agencyId, airline, flight, direct ? master : undefined); setSel([]); setMaster(""); }}>Book {sel.length || ""} and issue AWB</Button>
-            </div>
-          </div>
-        ) : <Empty>No purchase orders waiting for freight. Labels come from the farm portal.</Empty>}
-      </Card>
-
+      <PageHeader
+        title="AWB Summary"
+        sub="Every master AWB, how full it is and whether its labels are printed. Close an AWB when it flies; its boxes then show up in Scan Receiving."
+        actions={<LinkButton href="/w/freight/add"><Plus size={16} /> Create new AWB shipment</LinkButton>}
+      />
+      <POTabs />
       <Card>
-        <CardHeader title="Master AWBs" />
         <Table>
-          <thead><tr><th>Master AWB</th><th>Booked via</th><th>Airline</th><th>Route</th><th>Flight</th><th>House AWBs</th><th className="num">Pieces</th><th>Status</th></tr></thead>
+          <thead><tr><th /><th>AWB</th><th>Origin</th><th>Ship date</th><th>Booked via</th><th className="num">Quantity</th><th className="num">FBE</th><th>Status</th><th className="num">Printed</th><th className="num">Not printed</th><th /></tr></thead>
           <tbody>
-            {awbs.map((a) => (
-              <tr key={a.id}>
-                <td className="font-mono text-xs">{a.number}</td>
-                <td>{s.contacts.find((c) => c.id === a.agencyId)?.name ?? <span className="text-muted">Direct</span>}</td>
-                <td>{a.airline}</td>
-                <td>{a.origin} → MIA</td>
-                <td>{date(a.flightDate)}</td>
-                <td className="text-xs">{a.houses.map((h) => <div key={h.hawb}><span className="font-mono">{h.hawb}</span> · {s.pos.find((p) => p.id === h.poId)?.number}</div>)}</td>
-                <td className="num">{a.houses.reduce((x, h) => x + h.pieces, 0)}</td>
-                <td><Status value={a.status} /></td>
-              </tr>
-            ))}
+            {awbs.map((a) => {
+              const lines = myPos.flatMap((p) => p.lines.map((l, i) => ({ p, l, i }))).filter(({ l }) => l.awbId === a.id);
+              const qty = lines.reduce((x, { l }) => x + (l.confirmedBoxes ?? 0), 0);
+              const f = lines.reduce((x, { l }) => x + fbe(l.boxType, l.confirmedBoxes ?? 0), 0);
+              const printed = s.boxes.filter((b) => b.awbId === a.id).length;
+              const isOpen = open === a.id;
+              // Liquidation: farm cost per customer on this AWB.
+              const byCustomer = new Map<string, { boxes: number; fbe: number; cost: number }>();
+              for (const { l } of lines) {
+                const k = l.customerId ?? "stock";
+                const cur = byCustomer.get(k) ?? { boxes: 0, fbe: 0, cost: 0 };
+                const n = l.confirmedBoxes ?? 0;
+                byCustomer.set(k, { boxes: cur.boxes + n, fbe: cur.fbe + fbe(l.boxType, n), cost: cur.cost + n * l.stemsPerBox * l.pricePerStemCents });
+              }
+              return (
+                <Fragment key={a.id}>
+                  <tr className="cursor-pointer hover:bg-surface-2" onClick={() => setOpen(isOpen ? null : a.id)}>
+                    <td className="w-6 text-muted">{isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</td>
+                    <td className="font-mono text-xs font-medium text-brand">{a.number}</td>
+                    <td className="font-mono text-xs">{a.origin}</td>
+                    <td>{date(a.flightDate)}</td>
+                    <td className="text-muted">{s.contacts.find((c) => c.id === a.agencyId)?.name ?? `Direct · ${a.airline}`}</td>
+                    <td className="num">{qty}</td>
+                    <td className="num">{f.toFixed(2)}</td>
+                    <td><Status value={a.status} /></td>
+                    <td className="num">{printed}</td>
+                    <td className={`num ${qty - printed > 0 ? "font-medium text-warn" : ""}`}>{qty - printed}</td>
+                    <td className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex justify-end gap-1">
+                        {a.status === "open" && <LinkButton variant="secondary" className="h-7 px-2 text-xs" href={`/w/freight/labels/${a.id}`}>Print labels</LinkButton>}
+                        {a.status === "open" && <Button className="h-7 px-2 text-xs" disabled={!printed || qty - printed > 0} title={qty - printed > 0 ? "Print every label first" : ""} onClick={() => s.closeAwb(a.id)}>Close &amp; fly</Button>}
+                      </div>
+                    </td>
+                  </tr>
+                  {isOpen && (
+                    <tr>
+                      <td colSpan={11} className="bg-surface-2/60">
+                        <div className="grid gap-4 py-2 lg:grid-cols-[2fr_1fr]">
+                          <div className="overflow-x-auto">
+                            <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted">Lines</div>
+                            <table className="w-full text-xs">
+                              <thead><tr className="text-left text-muted"><th className="py-1 pr-3">House AWB</th><th className="pr-3">PO #</th><th className="pr-3">Vendor</th><th className="pr-3">Product</th><th className="pr-3">Qty</th><th className="pr-3">Customer</th></tr></thead>
+                              <tbody>
+                                {lines.map(({ p, l, i }) => (
+                                  <tr key={`${p.id}:${i}`} className="border-t border-line">
+                                    <td className="py-1 pr-3 font-mono">{l.hawb}</td>
+                                    <td className="pr-3">{p.number}</td>
+                                    <td className="pr-3 font-mono">{s.orgs.find((o) => o.id === p.farmId)?.code}</td>
+                                    <td className="pr-3">{productName(s.products.find((x) => x.id === l.productId))}</td>
+                                    <td className="pr-3">{l.confirmedBoxes} {l.boxType}</td>
+                                    <td className="pr-3 font-mono">{s.contacts.find((c) => c.id === l.customerId)?.code ?? "STOCK"}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          <div>
+                            <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted">Liquidation by customer</div>
+                            <table className="w-full text-xs">
+                              <thead><tr className="text-left text-muted"><th className="py-1">Customer</th><th className="text-right">Boxes</th><th className="text-right">FBE</th><th className="text-right">Farm cost</th></tr></thead>
+                              <tbody>
+                                {[...byCustomer].map(([k, v]) => (
+                                  <tr key={k} className="border-t border-line">
+                                    <td className="py-1">{s.contacts.find((c) => c.id === k)?.name ?? "Stock"}</td>
+                                    <td className="text-right tabular-nums">{v.boxes}</td>
+                                    <td className="text-right tabular-nums">{v.fbe.toFixed(2)}</td>
+                                    <td className="text-right tabular-nums">{money(v.cost)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              );
+            })}
           </tbody>
         </Table>
+        {!awbs.length && <Empty>No AWBs yet. Create one from Add AWB.</Empty>}
       </Card>
     </>
   );

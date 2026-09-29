@@ -15,11 +15,12 @@ export default function NewPO() {
   const s = useStore();
   const router = useRouter();
   const farms = s.contacts.filter((c) => c.ownerOrgId === s.session!.orgId && c.kind === "farm");
+  const customers = s.contacts.filter((c) => c.ownerOrgId === s.session!.orgId && c.kind === "customer");
   const [farmId, setFarmId] = useState(farms[0]?.linkedOrgId ?? "");
   const d = new Date();
   d.setDate(d.getDate() + 4);
   const [shipDate, setShipDate] = useState(d.toISOString().slice(0, 10));
-  const [lines, setLines] = useState<POLine[]>([{ productId: "p_freedom50", boxType: "HB", boxes: 4, stemsPerBox: 250, pricePerStemCents: 32 }]);
+  const [lines, setLines] = useState<POLine[]>([{ productId: "p_freedom50", boxType: "HB", boxes: 4, stemsPerBox: 250, pricePerStemCents: 32, customerId: "c_mari" }]);
 
   const upd = (i: number, patch: Partial<POLine>) => setLines((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l)));
   const total = lines.reduce((a, l) => a + l.boxes * l.stemsPerBox * l.pricePerStemCents, 0);
@@ -30,7 +31,7 @@ export default function NewPO() {
 
   return (
     <>
-      <PageHeader title="New purchase order" sub="The farm will see it in its portal as soon as you send it." />
+      <PageHeader title="New purchase order" sub="The farm will see it in its portal as soon as you send it. Each line can already be sold to a customer; its code goes on the box label." />
       <Card className="mb-4 p-4">
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="Farm">
@@ -47,10 +48,16 @@ export default function NewPO() {
         <CardHeader title="Lines" action={<Button variant="secondary" onClick={() => setLines([...lines, { productId: s.products[0].id, boxType: "QB", boxes: 1, stemsPerBox: 100, pricePerStemCents: 30 }])}><Plus size={16} /> Add line</Button>} />
         <div className="grid gap-3 p-4">
           {lines.map((l, i) => (
-            <div key={i} className="grid items-end gap-3 rounded-lg border border-line p-3 sm:grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]">
+            <div key={i} className="grid items-end gap-3 rounded-lg border border-line p-3 sm:grid-cols-[2fr_1.4fr_0.8fr_0.8fr_1fr_0.9fr_auto]">
               <Field label="Product">
                 <select className={inputCls} value={l.productId} onChange={(e) => upd(i, { productId: e.target.value })}>
                   {s.products.map((p) => <option key={p.id} value={p.id}>{productName(p)} · {p.color}</option>)}
+                </select>
+              </Field>
+              <Field label="Customer (prebook)">
+                <select className={inputCls} value={l.customerId ?? ""} onChange={(e) => upd(i, { customerId: e.target.value || undefined })}>
+                  <option value="">Stock (no customer)</option>
+                  {customers.map((c) => <option key={c.id} value={c.id}>{c.code} · {c.name}</option>)}
                 </select>
               </Field>
               <Field label="Box type">
