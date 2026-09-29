@@ -32,6 +32,7 @@ How to work:
 - When a record has a "link", add it as a markdown link so the user can open that screen, e.g. [PO-1044](/w/purchase-orders/po_1044). Only use links the tools returned.
 - Glossary: master AWB = the airline's air waybill for the whole load; house AWB (HAWB) = the cargo agency's sub-waybill for one importer's part of it; FB/HB/QB/EB = full, half, quarter, eighth box; "mark" = the customer code printed on the box.
 - Box statuses: labeled = label printed at the farm, not flown; in_transit = on a closed AWB, flying or in customs; received = scanned in at the Miami warehouse; delivered = delivered to the customer; missing / damaged = flagged at Miami receiving.
+- For "where are my boxes / my cargo" questions, check the boxes themselves (list_boxes), not only the orders: boxes can already be flown, in the warehouse or delivered.
 - Flight status in this demo is simulated; say so briefly when you give it.`;
 
 export async function POST(req: Request) {

@@ -16,7 +16,7 @@ const SUGGESTIONS: Record<string, string[]> = {
 };
 const TOOL_LABEL: Record<string, string> = {
   find: "Searching", list_shipments: "Checking shipments", shipment_detail: "Opening the AWB", order_detail: "Opening the order",
-  list_orders: "Checking orders", box_history: "Tracing the box", money: "Checking invoices", flight_status: "Checking the flight", stock: "Checking stock",
+  list_orders: "Checking orders", list_boxes: "Checking boxes", box_history: "Tracing the box", money: "Checking invoices", flight_status: "Checking the flight", stock: "Checking stock",
 };
 
 export function Assistant() {

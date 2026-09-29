@@ -47,6 +47,19 @@ export const TOOLS: Tool[] = [
     },
   },
   {
+    name: "list_boxes",
+    description:
+      "List boxes this account can see, filtered by status and/or a day. Use it for 'where are my boxes', 'what arrived today', 'what is missing'. For a florist, boxes delivered by the importer but not yet scanned in at the shop have status delivered and no floristReceivedAt.",
+    input_schema: {
+      type: "object",
+      properties: {
+        status: { type: "string", enum: ["labeled", "in_transit", "received", "delivered", "missing", "damaged", "not_at_shop_yet", "any"], description: "not_at_shop_yet = delivered by the importer, not scanned in at the florist shop." },
+        day: str("Optional day YYYY-MM-DD: keeps boxes that flew, were scanned in Miami, delivered or received at the shop that day."),
+      },
+      additionalProperties: false,
+    },
+  },
+  {
     name: "box_history",
     description: "The story of one box by its label code: ordered, confirmed, labeled, flown, scanned in Miami, delivered, received at the florist, or flagged missing/damaged. Use for 'what happened with this box/load'.",
     input_schema: { type: "object", properties: { code: str("Box label barcode, e.g. IT558465014.") }, required: ["code"], additionalProperties: false },
@@ -166,6 +179,16 @@ export function runTool(d: AssistantData, name: string, input: Record<string, un
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
         .map((o) => ({ type: o.type, number: o.number, status: o.status, farm: o.farm, customer: o.customer, shipDate: o.shipDate, neededBy: o.neededBy, awb: o.awb, link: o.link }));
       return cap(rows);
+    }
+    case "list_boxes": {
+      const st = s("status");
+      const day = s("day");
+      const rows = d.boxes.filter(
+        (b) =>
+          (!st || st === "any" || (st === "not_at_shop_yet" ? b.status === "delivered" && !b.floristReceivedAt : b.status === st)) &&
+          (!day || [b.flightDate, b.receivedAt, b.deliveredAt, b.floristReceivedAt].some((x) => x?.startsWith(day))),
+      );
+      return { counts: boxCounts(rows), ...cap(rows, 40) };
     }
     case "box_history": {
       const n = norm(s("code"));
