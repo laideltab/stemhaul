@@ -3,7 +3,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { buildSeed, type Data } from "./seed";
-import type { Box, InvoicePayment, OnlineOrder, Payment, POLine, QBBatch, Receipt, Sale } from "./types";
+import type { Box, InvoicePayment, Listing, MapFarm, MarketOrder, OnlineOrder, Payment, POLine, QBBatch, Receipt, Sale } from "./types";
+import { importerFor, salePrice } from "./market";
 import { stockByProduct } from "./selectors";
 
 export interface Session {
@@ -47,6 +48,13 @@ interface Actions {
   deliverBoxes: (customerId: string, boxIds: string[], pricePerStemCents: Record<string, number>) => string;
   recordPayment: (invoiceId: string, payment: Omit<InvoicePayment, "id">) => void;
   payBill: (billId: string) => void;
+
+  setCart: (listingId: string, boxes: number) => void;
+  placeMarketOrders: (delivery: MarketOrder["delivery"], payment: MarketOrder["payment"]) => string[];
+  farmConfirmMarketOrder: (orderId: string, confirmed: number[]) => string | undefined;
+  farmDeclineMarketOrder: (orderId: string) => void;
+  updateListing: (listingId: string, patch: Partial<Pick<Listing, "farmPriceCents" | "stockBoxes" | "listed">>) => void;
+  setMapFarm: (farmId: string, patch: Partial<Pick<MapFarm, "markupPct" | "enabled">>) => void;
 
   floristScanBox: (code: string) => Result;
   receiveManual: (supplier: string, lines: Receipt["lines"]) => void;
@@ -261,6 +269,77 @@ export const useStore = create<Store>()(
         },
         payBill: (billId) => set((s) => ({ bills: s.bills.map((b) => (b.id === billId ? { ...b, paidCents: b.totalCents } : b)) })),
 
+        setCart: (listingId, boxes) =>
+          set((s) => {
+            const max = s.listings.find((l) => l.id === listingId)?.stockBoxes ?? 0;
+            const n = Math.max(0, Math.min(max, Math.round(boxes)));
+            const rest = s.cart.filter((c) => c.listingId !== listingId);
+            return { cart: n ? [...rest, { listingId, boxes: n }] : rest };
+          }),
+        placeMarketOrders: (delivery, payment) => {
+          const s = get();
+          const floristOrgId = me().orgId;
+          const { customer, importer } = importerFor(s, floristOrgId);
+          if (!customer || !importer || !s.cart.length) return [];
+          const createdAt = now();
+          const ship = new Date();
+          ship.setDate(ship.getDate() + 2);
+          const byFarm = new Map<string, typeof s.cart>();
+          for (const c of s.cart) {
+            const farmId = s.listings.find((l) => l.id === c.listingId)!.farmId;
+            byFarm.set(farmId, [...(byFarm.get(farmId) ?? []), c]);
+          }
+          const orders: MarketOrder[] = [...byFarm].map(([farmId, items]) => {
+            const n = next("mk");
+            const markupPct = s.mapFarms.find((m) => m.wholesalerId === importer.id && m.farmId === farmId)?.markupPct ?? 0;
+            return {
+              id: `mk_${n}`, number: `MK-${n}`, wholesalerId: importer.id, floristOrgId, customerId: customer.id, farmId, createdAt,
+              confirmBy: new Date(Date.now() + 4 * 3600000).toISOString(), shipDate: ship.toISOString().slice(0, 10),
+              delivery, payment, status: "pending",
+              lines: items.map((c) => {
+                const l = s.listings.find((x) => x.id === c.listingId)!;
+                return { listingId: l.id, productId: l.productId, boxType: l.boxType, boxes: c.boxes, stemsPerBox: l.stemsPerBox, farmPriceCents: l.farmPriceCents, salePriceCents: salePrice(l.farmPriceCents, markupPct) };
+              }),
+            };
+          });
+          set((st) => ({ marketOrders: [...orders, ...st.marketOrders], cart: [] }));
+          return orders.map((o) => o.id);
+        },
+        farmConfirmMarketOrder: (orderId, confirmed) => {
+          const s = get();
+          const o = s.marketOrders.find((x) => x.id === orderId);
+          if (!o || o.status !== "pending") return;
+          const lines = o.lines.map((l, i) => ({ ...l, confirmedBoxes: Math.max(0, Math.min(l.boxes, confirmed[i] ?? l.boxes)) }));
+          const at = now();
+          if (lines.every((l) => !l.confirmedBoxes)) {
+            set((st) => ({ marketOrders: st.marketOrders.map((x) => (x.id === orderId ? { ...x, lines, status: "declined", confirmedAt: at } : x)) }));
+            return;
+          }
+          // Confirming creates the importer's purchase order, customer already on every line; from here it is the regular PO flow.
+          const n = next("po");
+          const poId = `po_${n}`;
+          const po = {
+            id: poId, number: `PO-${n}`, wholesalerId: o.wholesalerId, farmId: o.farmId, shipDate: o.shipDate, status: "confirmed" as const, createdAt: at, marketOrderId: o.id,
+            lines: lines.map((l) => ({ productId: l.productId, boxType: l.boxType, boxes: l.boxes, stemsPerBox: l.stemsPerBox, pricePerStemCents: l.farmPriceCents, salePriceCents: l.salePriceCents, customerId: o.customerId, confirmedBoxes: l.confirmedBoxes })),
+          };
+          set((st) => ({
+            pos: [po, ...st.pos],
+            marketOrders: st.marketOrders.map((x) => (x.id === orderId ? { ...x, lines, status: "confirmed", confirmedAt: at, poId } : x)),
+            listings: st.listings.map((l) => {
+              const used = lines.filter((x) => x.listingId === l.id).reduce((a, x) => a + (x.confirmedBoxes ?? 0), 0);
+              return used ? { ...l, stockBoxes: Math.max(0, l.stockBoxes - used) } : l;
+            }),
+          }));
+          return po.number;
+        },
+        farmDeclineMarketOrder: (orderId) =>
+          set((st) => ({
+            marketOrders: st.marketOrders.map((x) => (x.id === orderId && x.status === "pending" ? { ...x, status: "declined", confirmedAt: now(), lines: x.lines.map((l) => ({ ...l, confirmedBoxes: 0 })) } : x)),
+          })),
+        updateListing: (listingId, patch) => set((st) => ({ listings: st.listings.map((l) => (l.id === listingId ? { ...l, ...patch } : l)) })),
+        setMapFarm: (farmId, patch) =>
+          set((st) => ({ mapFarms: st.mapFarms.map((m) => (m.wholesalerId === me().orgId && m.farmId === farmId ? { ...m, ...patch } : m)) })),
+
         floristScanBox: (code) => {
           const s = get();
           const orgId = me().orgId;
@@ -401,6 +480,6 @@ export const useStore = create<Store>()(
         },
       };
     },
-    { name: "stemhaul-demo-v2" },
+    { name: "stemhaul-demo-v3" },
   ),
 );

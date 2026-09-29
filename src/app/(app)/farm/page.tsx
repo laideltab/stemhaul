@@ -12,10 +12,17 @@ export default function FarmPortal() {
   const farm = s.orgs.find((o) => o.id === orgId)!;
   const pos = s.pos.filter((p) => p.farmId === orgId && p.status !== "draft").sort((a, b) => b.number.localeCompare(a.number));
   const [conf, setConf] = useState<Record<string, number>>({});
+  const newMap = s.marketOrders.filter((o) => o.farmId === orgId && o.status === "pending").length;
 
   return (
     <>
       <PageHeader title="My Orders & Labels" sub={`${farm.name} · vendor code ${farm.code} · ships from ${farm.origin}`} />
+      {newMap > 0 && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent/40 bg-warn-soft/60 px-4 py-3 text-sm">
+          <span><b>{newMap} new order{newMap > 1 ? "s" : ""} from the farm map</b> waiting for you to confirm.</span>
+          <LinkButton href="/farm/map-orders">Review map orders</LinkButton>
+        </div>
+      )}
       <div className="grid gap-4">
         {pos.map((p) => {
           const buyer = s.orgs.find((o) => o.id === p.wholesalerId)!;
@@ -25,7 +32,7 @@ export default function FarmPortal() {
             <Card key={p.id}>
               <CardHeader
                 title={<span className="flex items-center gap-2">{p.number} <Status value={p.status} /></span>}
-                sub={`${buyer.name} · ship ${date(p.shipDate)} · ${boxes} boxes ordered · ${money(p.lines.reduce((a, l) => a + l.boxes * l.stemsPerBox * l.pricePerStemCents, 0))}`}
+                sub={`${buyer.name}${p.marketOrderId ? ` · map order ${s.marketOrders.find((m) => m.id === p.marketOrderId)?.number}` : ""} · ship ${date(p.shipDate)} · ${boxes} boxes ordered · ${money(p.lines.reduce((a, l) => a + l.boxes * l.stemsPerBox * l.pricePerStemCents, 0))}`}
                 action={
                   <div className="flex gap-2">
                     {p.status === "sent" && <Button onClick={() => s.farmConfirmPO(p.id, p.lines.map((l, i) => conf[`${p.id}:${i}`] ?? l.boxes))}>Confirm order</Button>}

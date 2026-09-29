@@ -3,6 +3,7 @@
 Clickable demo of Stem Haul, a licensed multi-tenant system for the flower trade with two modules:
 
 - **Wholesale** (Komet-style): purchase orders to farms, farm portal with 4×6 box labels, freight booking with master/house AWBs, scan receiving in Miami, deliveries and invoices, receivables and payables, QuickBooks sync.
+- **Farm marketplace**: the importer's farm map. Florists pick a farm on the map and buy at the delivered price (farm price plus the importer's markup); the farm gets a notification and confirms each line; confirming creates the importer's PO with the florist on every line, and it continues through the regular AWB, labels, receiving and delivery flow. Farms keep their prices and stock in My Listings.
 - **Florist shop**: receive boxes from a wholesaler on Stem Haul by scanning them (no retyping), manual purchases from other Miami suppliers, stock in stems, make bunches from recipes, point of sale (retail and wholesale prices), web shop tied to stock, online orders, and cash close per cashier.
 
 All data is fake. It is generated in `src/lib/seed.ts` and kept in the browser's localStorage, so the demo runs with no database or credentials. Use **Reset demo data** in the sidebar to start over.

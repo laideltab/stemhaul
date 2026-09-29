@@ -23,6 +23,9 @@
   --info: #2b5c9e;
   --info-soft: #e0eaf7;
   --bar: #2f7a57;
+  --map-sea: #e3ebe6;
+  --map-land: #fbfaf6;
+  --map-border: #c9cfc6;
 }
 
 @theme inline {

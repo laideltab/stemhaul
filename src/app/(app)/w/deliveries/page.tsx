@@ -29,7 +29,10 @@ export default function Deliveries() {
   const defaults: Record<string, number> = {};
   for (const b of available) {
     const p = s.products.find((x) => x.id === b.productId)!;
-    defaults[b.productId] ??= Math.round(b.costPerStemCents * markup[p.species]);
+    // Boxes from a marketplace order keep the delivered price the florist already agreed to.
+    const agreed = s.pos.find((x) => x.id === b.poId)?.lines[b.lineIndex]?.salePriceCents;
+    if (agreed) defaults[b.productId] = agreed;
+    else defaults[b.productId] ??= Math.round(b.costPerStemCents * (markup[p.species] ?? 1.6));
   }
   const price = (pid: string) => prices[pid] ?? defaults[pid];
   const total = selected.reduce((a, b) => a + b.stems * price(b.productId), 0);

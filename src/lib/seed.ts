@@ -1,7 +1,8 @@
 import type {
-  Bill, Box, BoxType, Contact, Invoice, InvoicePayment, MasterAWB, OnlineOrder, Org, Product, PurchaseOrder,
-  QBBatch, Receipt, Sale, SaleItem, Shift, StockMovement, User,
+  Bill, Box, BoxType, CartItem, Contact, Invoice, InvoicePayment, Listing, MapFarm, MarketOrder, MasterAWB, OnlineOrder,
+  Org, Product, PurchaseOrder, QBBatch, Receipt, Sale, SaleItem, Shift, StockMovement, User,
 } from "./types";
+import { salePrice } from "./market";
 
 export interface Data {
   orgs: Org[];
@@ -20,6 +21,10 @@ export interface Data {
   shifts: Shift[];
   onlineOrders: OnlineOrder[];
   qb: QBBatch[];
+  listings: Listing[];
+  mapFarms: MapFarm[];
+  marketOrders: MarketOrder[];
+  cart: CartItem[];
   counters: Record<string, number>;
 }
 
@@ -61,10 +66,13 @@ export function buildSeed(): Data {
     { id: MARI, name: "Mari Flowers", kind: "florist", city: "Miami, FL", code: "MF", modules: ["florist"], plan: "Starter", billing: "active", since: "2026-03-02" },
     { id: "org_bloom", name: "Bloom & Co", kind: "florist", city: "Doral, FL", code: "BC", modules: ["florist"], plan: "Starter", billing: "trial", since: "2026-09-10" },
     { id: "org_petal", name: "Petal Supply Group", kind: "wholesaler", city: "Medley, FL", code: "PS", modules: ["wholesale", "florist"], plan: "Enterprise", billing: "past_due", since: "2026-05-20" },
-    { id: ESPERANZA, name: "Finca La Esperanza", kind: "farm", city: "Cayambe, Ecuador", code: "ESPER", origin: "UIO", modules: [], plan: "Farm (free)", billing: "active", since: "2026-01-15" },
-    { id: "org_sabana", name: "Flores de la Sabana", kind: "farm", city: "Bogotá, Colombia", code: "SAGA", origin: "BOG", modules: [], plan: "Farm (free)", billing: "active", since: "2026-01-20" },
-    { id: "org_andes", name: "Andes Hydrangeas", kind: "farm", city: "Rionegro, Colombia", code: "ANDHY", origin: "MDE", modules: [], plan: "Farm (free)", billing: "active", since: "2026-02-04" },
-    { id: "org_pacifico", name: "Flores del Pacífico", kind: "farm", city: "Lima, Peru", code: "FLORI", origin: "LIM", modules: [], plan: "Farm (free)", billing: "active", since: "2026-06-12" },
+    { id: ESPERANZA, name: "Finca La Esperanza", kind: "farm", city: "Cayambe, Ecuador", code: "ESPER", origin: "UIO", lat: 0.04, lng: -78.14, tagline: "2,850 m on the equator · roses cut to order", modules: [], plan: "Farm (free)", billing: "active", since: "2026-01-15" },
+    { id: "org_sabana", name: "Flores de la Sabana", kind: "farm", city: "Madrid, Colombia", code: "SAGA", origin: "BOG", lat: 4.73, lng: -74.26, tagline: "Carnations and alstroemeria from the Bogotá savanna", modules: [], plan: "Farm (free)", billing: "active", since: "2026-01-20" },
+    { id: "org_andes", name: "Andes Hydrangeas", kind: "farm", city: "Rionegro, Colombia", code: "ANDHY", origin: "MDE", lat: 6.15, lng: -75.37, tagline: "Jumbo hydrangeas grown at 2,100 m", modules: [], plan: "Farm (free)", billing: "active", since: "2026-02-04" },
+    { id: "org_pacifico", name: "Flores del Pacífico", kind: "farm", city: "Huaral, Peru", code: "FLORI", origin: "LIM", lat: -11.5, lng: -77.2, tagline: "Fillers and wax flower from the Peruvian coast", modules: [], plan: "Farm (free)", billing: "active", since: "2026-06-12" },
+    { id: "org_cotopaxi", name: "Hacienda Cotopaxi Roses", kind: "farm", city: "Latacunga, Ecuador", code: "COTOP", origin: "UIO", lat: -0.93, lng: -78.62, tagline: "Big-head roses under the Cotopaxi volcano", modules: [], plan: "Farm (free)", billing: "active", since: "2026-07-01" },
+    { id: "org_guasca", name: "Flores de Guasca", kind: "farm", city: "Guasca, Colombia", code: "GUASC", origin: "BOG", lat: 4.87, lng: -73.88, tagline: "Spray roses and pompons", modules: [], plan: "Farm (free)", billing: "active", since: "2026-07-18" },
+    { id: "org_machachi", name: "Rosas de Machachi", kind: "farm", city: "Machachi, Ecuador", code: "MACHA", origin: "UIO", lat: -0.51, lng: -78.57, tagline: "Garden and classic roses", modules: [], plan: "Farm (free)", billing: "trial", since: "2026-09-02" },
   ];
 
   const users: User[] = [
@@ -95,6 +103,17 @@ export function buildSeed(): Data {
     { id: "p_gyp", species: "Gypsophila", variety: "Xlence", color: "White", lengthCm: 75, stemsPerBunch: 10 },
     { id: "p_waxpink", species: "Wax Flower", variety: "Chamelaucium", color: "Pink", lengthCm: 60, stemsPerBunch: 10 },
     { id: "p_waxwhite", species: "Wax Flower", variety: "Chamelaucium", color: "White", lengthCm: 60, stemsPerBunch: 10 },
+    { id: "p_freedom60", species: "Rose", variety: "Freedom", color: "Red", lengthCm: 60, stemsPerBunch: 25 },
+    { id: "p_freedom70", species: "Rose", variety: "Freedom", color: "Red", lengthCm: 70, stemsPerBunch: 25 },
+    { id: "p_mondial50", species: "Rose", variety: "Mondial", color: "White", lengthCm: 50, stemsPerBunch: 25 },
+    { id: "p_mondial60", species: "Rose", variety: "Mondial", color: "White", lengthCm: 60, stemsPerBunch: 25 },
+    { id: "p_vendela60", species: "Rose", variety: "Vendela", color: "White", lengthCm: 60, stemsPerBunch: 25 },
+    { id: "p_brighton50", species: "Rose", variety: "Brighton", color: "Yellow", lengthCm: 50, stemsPerBunch: 25 },
+    { id: "p_deeppurple50", species: "Rose", variety: "Deep Purple", color: "Lavender", lengthCm: 50, stemsPerBunch: 25 },
+    { id: "p_spraylydia", species: "Spray Rose", variety: "Lydia", color: "Pink", lengthCm: 50, stemsPerBunch: 10 },
+    { id: "p_hydblue", species: "Hydrangea", variety: "Premium", color: "Blue", lengthCm: 60, stemsPerBunch: 1 },
+    { id: "p_pompon", species: "Pompon", variety: "Daisy", color: "Mixed", lengthCm: 70, stemsPerBunch: 10 },
+    { id: "p_limonium", species: "Limonium", variety: "Emille", color: "Purple", lengthCm: 70, stemsPerBunch: 10 },
     { id: "p_euca", species: "Eucalyptus", variety: "Baby Blue", color: "Green", lengthCm: 60, stemsPerBunch: 10 },
   ];
   const pname = (id: string) => {
@@ -107,6 +126,9 @@ export function buildSeed(): Data {
     { id: "c_sabana", ownerOrgId: LUCYS, kind: "farm", name: "Flores de la Sabana", country: "Colombia", linkedOrgId: "org_sabana", terms: "Net 15" },
     { id: "c_andes", ownerOrgId: LUCYS, kind: "farm", name: "Andes Hydrangeas", country: "Colombia", linkedOrgId: "org_andes", terms: "Net 30" },
     { id: "c_pacifico", ownerOrgId: LUCYS, kind: "farm", name: "Flores del Pacífico", country: "Peru", linkedOrgId: "org_pacifico", terms: "Net 15" },
+    { id: "c_cotopaxi", ownerOrgId: LUCYS, kind: "farm", name: "Hacienda Cotopaxi Roses", country: "Ecuador", linkedOrgId: "org_cotopaxi", terms: "Net 15" },
+    { id: "c_guasca", ownerOrgId: LUCYS, kind: "farm", name: "Flores de Guasca", country: "Colombia", linkedOrgId: "org_guasca", terms: "Net 15" },
+    { id: "c_machachi", ownerOrgId: LUCYS, kind: "farm", name: "Rosas de Machachi", country: "Ecuador", linkedOrgId: "org_machachi", terms: "Net 15" },
     { id: "c_ag_uio", ownerOrgId: LUCYS, kind: "agency", name: "Ecuador Cargo Express", country: "Ecuador", terms: "Net 7" },
     { id: "c_ag_bog", ownerOrgId: LUCYS, kind: "agency", name: "Andina Freight Forwarders", country: "Colombia", terms: "Net 7" },
     { id: "c_mari", ownerOrgId: LUCYS, kind: "customer", name: "Mari Flowers", country: "USA", linkedOrgId: MARI, terms: "Net 15", code: "ITS1097" },
@@ -120,10 +142,10 @@ export function buildSeed(): Data {
 
   // ---------------- Wholesale: POs, boxes, AWBs, invoices ----------------
   const cap: Record<BoxType, Record<string, number>> = {
-    FB: { Rose: 500, Carnation: 500, Alstroemeria: 300, Hydrangea: 60, Gypsophila: 200, Eucalyptus: 200, "Wax Flower": 200 },
-    HB: { Rose: 250, Carnation: 250, Alstroemeria: 150, Hydrangea: 30, Gypsophila: 100, Eucalyptus: 100, "Wax Flower": 100 },
-    QB: { Rose: 100, Carnation: 125, Alstroemeria: 80, Hydrangea: 15, Gypsophila: 50, Eucalyptus: 50, "Wax Flower": 50 },
-    EB: { Rose: 50, Carnation: 60, Alstroemeria: 40, Hydrangea: 8, Gypsophila: 25, Eucalyptus: 25, "Wax Flower": 25 },
+    FB: { "Spray Rose": 400, Pompon: 300, Limonium: 200, Rose: 500, Carnation: 500, Alstroemeria: 300, Hydrangea: 60, Gypsophila: 200, Eucalyptus: 200, "Wax Flower": 200 },
+    HB: { "Spray Rose": 200, Pompon: 150, Limonium: 100, Rose: 250, Carnation: 250, Alstroemeria: 150, Hydrangea: 30, Gypsophila: 100, Eucalyptus: 100, "Wax Flower": 100 },
+    QB: { "Spray Rose": 100, Pompon: 75, Limonium: 50, Rose: 100, Carnation: 125, Alstroemeria: 80, Hydrangea: 15, Gypsophila: 50, Eucalyptus: 50, "Wax Flower": 50 },
+    EB: { "Spray Rose": 50, Pompon: 40, Limonium: 25, Rose: 50, Carnation: 60, Alstroemeria: 40, Hydrangea: 8, Gypsophila: 25, Eucalyptus: 25, "Wax Flower": 25 },
   };
   const stemsFor = (productId: string, bt: BoxType) => cap[bt][products.find((p) => p.id === productId)!.species];
 
@@ -228,7 +250,7 @@ export function buildSeed(): Data {
   const invoices: Invoice[] = [];
   let invN = 5200;
   let payN = 7000;
-  const markup: Record<string, number> = { Rose: 1.55, Carnation: 1.7, Alstroemeria: 1.6, Hydrangea: 1.45, Gypsophila: 1.6, Eucalyptus: 1.6, "Wax Flower": 1.6 };
+  const markup: Record<string, number> = { "Spray Rose": 1.55, Pompon: 1.6, Limonium: 1.6, Rose: 1.55, Carnation: 1.7, Alstroemeria: 1.6, Hydrangea: 1.45, Gypsophila: 1.6, Eucalyptus: 1.6, "Wax Flower": 1.6 };
   const deliver = (customerId: string, poIds: string[], dayOffset: number, paidRatio: number, method: InvoicePayment["method"] = "Zelle") => {
     invN++;
     const inv: Invoice = {
@@ -391,7 +413,7 @@ export function buildSeed(): Data {
       p_freedom50: 320, p_explorer70: 150, p_vendela50: 210, p_pinkfloyd60: 175, p_momentum50: 0,
       p_carnwhite: 140, p_carnpink: 95, p_alstro: 88, p_hydwhite: 12, p_gyp: 64, p_euca: 72, p_waxpink: 0, p_waxwhite: 0,
     };
-    const target = targets[p.id] ?? 50;
+    const target = targets[p.id] ?? 0;
     const need = Math.max(0, target - bal);
     if (need > 0) movements.unshift({ id: `mv_open_${p.id}`, orgId: MARI, at: opening, productId: p.id, stems: need, type: "adjust", note: "Opening count", userId: "u_mari" });
   }
@@ -412,9 +434,68 @@ export function buildSeed(): Data {
     qb.push({ id: `qb_${inv.id}`, orgId: LUCYS, at: addDays(inv.date, 1) + "T11:00:00.000Z", kind: "invoices", description: `${inv.number} (A/R)`, count: 1, totalCents: inv.totalCents, status: "sent" });
   }
 
+  // ---------------- Farm marketplace (Lucy's map) ----------------
+  const L = (farmId: string, rows: [string, BoxType, number, number, boolean?][]) =>
+    rows.map(([productId, boxType, price, stock, listed = true]) => ({ farmId, productId, boxType, stemsPerBox: stemsFor(productId, boxType), farmPriceCents: price, stockBoxes: stock, listed }));
+  const listings: Listing[] = [
+    ...L(ESPERANZA, [["p_freedom50", "HB", 32, 40], ["p_freedom60", "HB", 38, 38], ["p_freedom70", "HB", 45, 12], ["p_mondial50", "HB", 30, 24], ["p_mondial60", "HB", 36, 10], ["p_vendela50", "HB", 30, 6], ["p_vendela60", "HB", 36, 1], ["p_pinkfloyd60", "HB", 45, 16], ["p_brighton50", "HB", 32, 11], ["p_deeppurple50", "HB", 38, 9], ["p_gyp", "QB", 20, 20], ["p_explorer70", "HB", 55, 0, false]]),
+    ...L("org_cotopaxi", [["p_freedom50", "HB", 30, 30], ["p_freedom60", "HB", 36, 22], ["p_explorer70", "HB", 52, 14], ["p_momentum50", "HB", 28, 18]]),
+    ...L("org_sabana", [["p_carnwhite", "HB", 14, 60], ["p_carnpink", "HB", 14, 45], ["p_alstro", "QB", 22, 30], ["p_gyp", "QB", 20, 25]]),
+    ...L("org_guasca", [["p_carnpink", "HB", 13, 20], ["p_spraylydia", "QB", 30, 16], ["p_pompon", "HB", 18, 24]]),
+    ...L("org_andes", [["p_hydwhite", "HB", 95, 20], ["p_hydblue", "HB", 105, 8]]),
+    ...L("org_pacifico", [["p_gyp", "QB", 19, 30], ["p_limonium", "QB", 24, 18], ["p_waxpink", "QB", 28, 12], ["p_waxwhite", "QB", 28, 10]]),
+    ...L("org_machachi", [["p_freedom50", "HB", 31, 20], ["p_vendela50", "HB", 30, 12]]),
+  ].map((l, i) => ({ id: `ls_${i + 1}`, ...l }));
+  const mapFarms: MapFarm[] = [
+    { wholesalerId: LUCYS, farmId: ESPERANZA, markupPct: 38, enabled: true },
+    { wholesalerId: LUCYS, farmId: "org_cotopaxi", markupPct: 35, enabled: true },
+    { wholesalerId: LUCYS, farmId: "org_sabana", markupPct: 40, enabled: true },
+    { wholesalerId: LUCYS, farmId: "org_guasca", markupPct: 36, enabled: true },
+    { wholesalerId: LUCYS, farmId: "org_andes", markupPct: 32, enabled: true },
+    { wholesalerId: LUCYS, farmId: "org_pacifico", markupPct: 30, enabled: true },
+    { wholesalerId: LUCYS, farmId: "org_machachi", markupPct: 35, enabled: false },
+  ];
+  const minutesAgo = (m: number) => new Date(Date.now() - m * 60000).toISOString();
+  const addHours = (iso: string, h: number) => new Date(new Date(iso).getTime() + h * 3600000).toISOString();
+  const mkSpecs: { n: number; florist: string; farm: string; ago: number; status: MarketOrder["status"]; lines: [string, number, number?][] }[] = [
+    { n: 10466, florist: MARI, farm: ESPERANZA, ago: 60 * 46, status: "confirmed", lines: [["p_freedom60", 2], ["p_pinkfloyd60", 1]] },
+    { n: 10468, florist: "org_bloom", farm: "org_pacifico", ago: 60 * 30, status: "declined", lines: [["p_waxpink", 3]] },
+    { n: 10471, florist: "org_bloom", farm: ESPERANZA, ago: 60 * 22, status: "confirmed", lines: [["p_mondial50", 3], ["p_vendela50", 2, 1]] },
+    { n: 10477, florist: MARI, farm: "org_sabana", ago: 35, status: "pending", lines: [["p_carnwhite", 2], ["p_alstro", 2]] },
+    { n: 10480, florist: "org_bloom", farm: "org_cotopaxi", ago: 130, status: "pending", lines: [["p_freedom50", 3]] },
+  ];
+  const marketOrders: MarketOrder[] = [];
+  for (const m of mkSpecs) {
+    const markupPct = mapFarms.find((x) => x.farmId === m.farm)!.markupPct;
+    const customerId = contacts.find((c) => c.kind === "customer" && c.linkedOrgId === m.florist)!.id;
+    const createdAt = minutesAgo(m.ago);
+    const mo: MarketOrder = {
+      id: `mk_${m.n}`, number: `MK-${m.n}`, wholesalerId: LUCYS, floristOrgId: m.florist, customerId, farmId: m.farm,
+      createdAt, confirmBy: addHours(createdAt, 4), shipDate: day(m.status === "pending" ? 2 : 1),
+      delivery: "shop", payment: "account", status: m.status,
+      lines: m.lines.map(([productId, boxes, conf]) => {
+        const ls = listings.find((l) => l.farmId === m.farm && l.productId === productId)!;
+        return {
+          listingId: ls.id, productId, boxType: ls.boxType, boxes, stemsPerBox: ls.stemsPerBox, farmPriceCents: ls.farmPriceCents,
+          salePriceCents: salePrice(ls.farmPriceCents, markupPct), confirmedBoxes: m.status === "confirmed" ? conf ?? boxes : m.status === "declined" ? 0 : undefined,
+        };
+      }),
+    };
+    if (m.status !== "pending") mo.confirmedAt = addHours(createdAt, 1.2);
+    if (m.status === "confirmed") {
+      poN++;
+      mo.poId = `po_${poN}`;
+      pos.push({
+        id: mo.poId, number: `PO-${poN}`, wholesalerId: LUCYS, farmId: m.farm, shipDate: mo.shipDate, status: "confirmed", createdAt: mo.confirmedAt!, marketOrderId: mo.id,
+        lines: mo.lines.map((l) => ({ productId: l.productId, boxType: l.boxType, boxes: l.boxes, stemsPerBox: l.stemsPerBox, pricePerStemCents: l.farmPriceCents, salePriceCents: l.salePriceCents, customerId, confirmedBoxes: l.confirmedBoxes })),
+      });
+    }
+    marketOrders.push(mo);
+  }
+
   return {
     orgs, users, products, contacts, pos, boxes, awbs, invoices, bills,
-    movements, receipts, saleItems, sales, shifts, onlineOrders, qb,
-    counters: { po: poN, box: boxN, lot, awb: awbs.length, hawb: hawbN, inv: invN, pay: payN, sale: saleN, shift: shN, mv: mvN, web: 1023, bill: billN },
+    movements, receipts, saleItems, sales, shifts, onlineOrders, qb, listings, mapFarms, marketOrders, cart: [],
+    counters: { mk: 10480, po: poN, box: boxN, lot, awb: awbs.length, hawb: hawbN, inv: invN, pay: payN, sale: saleN, shift: shN, mv: mvN, web: 1023, bill: billN },
   };
 }

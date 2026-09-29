@@ -22,9 +22,9 @@ export default function DemoSignIn() {
   };
 
   const accounts = [
-    { orgId: "org_lucys", icon: <Warehouse size={20} />, blurb: "Importer / wholesaler. Buys from farms, books freight, receives in Miami and delivers to florists." },
-    { orgId: "org_mari", icon: <Store size={20} />, blurb: "Florist shop. Receives boxes from Lucy's, makes bunches, sells in store and online, closes cash per cashier." },
-    { orgId: "org_esperanza", icon: <Tractor size={20} />, blurb: "Farm portal. Confirms purchase orders and prints box labels." },
+    { orgId: "org_lucys", icon: <Warehouse size={20} />, blurb: "Importer / wholesaler. Runs the farm map, buys from farms, books freight, receives in Miami and delivers to florists." },
+    { orgId: "org_mari", icon: <Store size={20} />, blurb: "Florist shop. Buys from farms on Lucy's map, receives the boxes, makes bunches, sells in store and online, closes cash per cashier." },
+    { orgId: "org_esperanza", icon: <Tractor size={20} />, blurb: "Farm portal. Confirms map orders and purchase orders, lists its flowers and prints box labels." },
   ];
 
   return (

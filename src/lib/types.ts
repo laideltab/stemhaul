@@ -14,6 +14,11 @@ export interface Org {
   phone?: string;
   /** Airport code farms ship from. */
   origin?: string;
+  /** Farm pin on the marketplace map. */
+  lat?: number;
+  lng?: number;
+  /** One line under the farm name in the marketplace. */
+  tagline?: string;
   modules: ModuleKey[];
   plan: "Starter" | "Pro" | "Enterprise" | "Farm (free)";
   billing: "active" | "trial" | "past_due";
@@ -70,6 +75,8 @@ export interface POLine {
   confirmedBoxes?: number;
   awbId?: string;
   hawb?: string;
+  /** Delivered price per stem the florist already agreed to on the marketplace. */
+  salePriceCents?: number;
 }
 
 export interface PurchaseOrder {
@@ -81,6 +88,8 @@ export interface PurchaseOrder {
   status: POStatus;
   lines: POLine[];
   createdAt: string;
+  /** Set when a florist's marketplace order created this PO. */
+  marketOrderId?: string;
 }
 
 export type BoxStatus = "labeled" | "in_transit" | "received" | "delivered" | "missing" | "damaged";
@@ -151,6 +160,65 @@ export interface Bill {
   dueDate: string;
   totalCents: number;
   paidCents: number;
+}
+
+// ---- Farm marketplace ----
+// The map is the importer's storefront: farms list at farm price, the importer adds its markup,
+// florists buy at the delivered price and the importer consolidates, flies and delivers.
+
+export interface Listing {
+  id: string;
+  farmId: string;
+  productId: string;
+  boxType: BoxType;
+  stemsPerBox: number;
+  farmPriceCents: number;
+  /** Boxes available for the next flight. */
+  stockBoxes: number;
+  listed: boolean;
+}
+
+/** A farm on an importer's map, with the importer's markup over the farm price. */
+export interface MapFarm {
+  wholesalerId: string;
+  farmId: string;
+  markupPct: number;
+  enabled: boolean;
+}
+
+export interface MarketLine {
+  listingId: string;
+  productId: string;
+  boxType: BoxType;
+  boxes: number;
+  stemsPerBox: number;
+  farmPriceCents: number;
+  salePriceCents: number;
+  confirmedBoxes?: number;
+}
+
+export interface MarketOrder {
+  id: string;
+  number: string;
+  wholesalerId: string;
+  floristOrgId: string;
+  /** The florist as a customer of the importer (its code goes on every box). */
+  customerId: string;
+  farmId: string;
+  createdAt: string;
+  confirmBy: string;
+  shipDate: string;
+  delivery: "shop" | "pickup";
+  payment: "account" | "card";
+  status: "pending" | "confirmed" | "declined";
+  confirmedAt?: string;
+  poId?: string;
+  lines: MarketLine[];
+}
+
+export interface CartItem {
+  listingId: string;
+  boxes: number;
 }
 
 // ---- Florist module ----

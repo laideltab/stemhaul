@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import {
-  Banknote, Boxes, ClipboardList, Flower2, Gauge, Globe, LayoutGrid, LogOut, Menu, PackageCheck,
-  Plane, RefreshCw, ScanLine, ShieldCheck, ShoppingCart, Tag, Truck, Users, Wallet, X,
+  Banknote, Bell, Boxes, ClipboardList, Flower2, Gauge, Globe, LayoutGrid, ListChecks, LogOut, Map as MapIcon, Menu, PackageCheck,
+  Plane, RefreshCw, ScanLine, ShieldCheck, ShoppingBasket, ShoppingCart, Tag, Truck, Users, Wallet, X,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/format";
@@ -21,6 +21,7 @@ const I = (C: typeof Gauge) => <C size={17} strokeWidth={1.8} />;
 
 const wholesaleNav: NavItem[] = [
   { href: "/w", label: "Dashboard", icon: I(Gauge) },
+  { href: "/w/marketplace", label: "Farm Marketplace", icon: I(MapIcon) },
   { href: "/w/purchase-orders", label: "Purchase Orders", icon: I(ClipboardList) },
   { href: "/w/freight", label: "Freight & AWBs", icon: I(Plane) },
   { href: "/w/receiving", label: "Scan Receiving", icon: I(ScanLine) },
@@ -36,7 +37,16 @@ const floristNav: NavItem[] = [
   { href: "/f/online", label: "Online Orders", icon: I(Globe) },
   { href: "/f/cash-close", label: "Cash Close", icon: I(Banknote) },
 ];
-const farmNav: NavItem[] = [{ href: "/farm", label: "My Orders & Labels", icon: I(Tag) }];
+const marketNav: NavItem[] = [
+  { href: "/f/market", label: "Farm Marketplace", icon: I(MapIcon) },
+  { href: "/f/market/orders", label: "My Farm Orders", icon: I(ListChecks) },
+  { href: "/f/market/cart", label: "Cart", icon: I(ShoppingBasket) },
+];
+const farmNav: NavItem[] = [
+  { href: "/farm/map-orders", label: "Map Orders", icon: I(Bell) },
+  { href: "/farm", label: "My Orders & Labels", icon: I(Tag) },
+  { href: "/farm/listings", label: "My Listings", icon: I(ListChecks) },
+];
 const commonNav: NavItem[] = [
   { href: "/qb", label: "QuickBooks Sync", icon: I(RefreshCw) },
   { href: "/users", label: "Users & Roles", icon: I(Users) },
@@ -50,6 +60,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const users = useStore((s) => s.users);
   const signOut = useStore((s) => s.signOut);
   const resetDemo = useStore((s) => s.resetDemo);
+  const cart = useStore((s) => s.cart);
+  const marketOrders = useStore((s) => s.marketOrders);
   const router = useRouter();
   const path = usePathname();
   const [open, setOpen] = useState(false);
@@ -69,10 +81,21 @@ export function AppShell({ children }: { children: ReactNode }) {
   else if (org?.kind === "farm") sections.push({ title: "Farm portal", items: farmNav });
   else {
     if (org?.modules.includes("wholesale")) sections.push({ title: "Wholesale", items: wholesaleNav });
-    if (org?.modules.includes("florist")) sections.push({ title: "Florist shop", items: floristNav });
+    if (org?.modules.includes("florist")) sections.push({ title: "Buy from farms", items: marketNav }, { title: "Florist shop", items: floristNav });
     sections.push({ title: "Account", items: commonNav });
   }
-  const active = (href: string) => (href.length <= 3 || href === "/farm" ? path === href : path.startsWith(href));
+  // The most specific menu entry that contains the current page is the active one.
+  const best = sections
+    .flatMap((s) => s.items.map((i) => i.href))
+    .filter((h) => path === h || path.startsWith(h + "/"))
+    .sort((a, b) => b.length - a.length)[0];
+  const active = (href: string) => href === best;
+  const badges: Record<string, number> = {
+    "/f/market/cart": cart.reduce((a, c) => a + c.boxes, 0),
+    "/f/market/orders": marketOrders.filter((o) => o.floristOrgId === session.orgId && o.status === "pending").length,
+    "/farm/map-orders": marketOrders.filter((o) => o.farmId === session.orgId && o.status === "pending").length,
+    "/w/marketplace": marketOrders.filter((o) => o.wholesalerId === session.orgId && o.status === "pending").length,
+  };
 
   const sidebar = (
     <nav className="flex h-full flex-col bg-sidebar text-sidebar-fg">
@@ -99,6 +122,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               >
                 {it.icon}
                 {it.label}
+                {!!badges[it.href] && <span className="ml-auto rounded-full bg-accent px-1.5 text-[11px] font-semibold text-white">{badges[it.href]}</span>}
               </Link>
             ))}
           </div>

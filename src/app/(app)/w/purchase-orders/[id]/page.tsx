@@ -24,7 +24,7 @@ export default function PODetail({ params }: { params: Promise<{ id: string }> }
     <>
       <PageHeader
         title={po.number}
-        sub={<>{farm?.name} ({farm?.code}) · ships {date(po.shipDate)} from {farm?.origin}</>}
+        sub={<>{farm?.name} ({farm?.code}) · ships {date(po.shipDate)} from {farm?.origin}{po.marketOrderId && <> · created from map order {s.marketOrders.find((m) => m.id === po.marketOrderId)?.number}</>}</>}
         actions={
           <>
             <LinkButton variant="secondary" href="/w/purchase-orders">All POs</LinkButton>

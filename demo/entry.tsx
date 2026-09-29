@@ -14,6 +14,14 @@ import ConfirmPOs from "@/app/(app)/w/purchase-orders/confirm/page";
 import Receiving from "@/app/(app)/w/receiving/page";
 import Deliveries from "@/app/(app)/w/deliveries/page";
 import Accounts from "@/app/(app)/w/accounts/page";
+import WMarket from "@/app/(app)/w/marketplace/page";
+import Market from "@/app/(app)/f/market/page";
+import MarketFarm from "@/app/(app)/f/market/farm/[id]/page";
+import MarketCart from "@/app/(app)/f/market/cart/page";
+import MarketOrders from "@/app/(app)/f/market/orders/page";
+import MarketOrder from "@/app/(app)/f/market/orders/[id]/page";
+import FarmMapOrders from "@/app/(app)/farm/map-orders/page";
+import FarmListings from "@/app/(app)/farm/listings/page";
 import F from "@/app/(app)/f/page";
 import Receive from "@/app/(app)/f/receive/page";
 import Inventory from "@/app/(app)/f/inventory/page";
@@ -42,6 +50,14 @@ const routes: [RegExp, Page, boolean, string?][] = [
   [/^\/w\/receiving$/, Receiving as Page, true],
   [/^\/w\/deliveries$/, Deliveries as Page, true],
   [/^\/w\/accounts$/, Accounts as Page, true],
+  [/^\/w\/marketplace$/, WMarket as Page, true],
+  [/^\/f\/market$/, Market as Page, true],
+  [/^\/f\/market\/farm\/([^/]+)$/, MarketFarm as Page, true, "id"],
+  [/^\/f\/market\/cart$/, MarketCart as Page, true],
+  [/^\/f\/market\/orders$/, MarketOrders as Page, true],
+  [/^\/f\/market\/orders\/([^/]+)$/, MarketOrder as Page, true, "id"],
+  [/^\/farm\/map-orders$/, FarmMapOrders as Page, true],
+  [/^\/farm\/listings$/, FarmListings as Page, true],
   [/^\/f$/, F as Page, true],
   [/^\/f\/receive$/, Receive as Page, true],
   [/^\/f\/inventory$/, Inventory as Page, true],
