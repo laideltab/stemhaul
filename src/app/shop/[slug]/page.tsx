@@ -40,7 +40,8 @@ export default function WebShop({ params }: { params: Promise<{ slug: string }> 
         <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 py-4">
           <Flower2 className="text-accent" />
           <span className="font-display text-xl font-semibold">{org.name}</span>
-          <span className="ml-auto text-sm text-muted">Same-day delivery in Miami</span>
+          <span className="ml-auto hidden text-sm text-muted sm:inline">Same-day delivery in Miami</span>
+          {s.session && <a href={process.env.NEXT_PUBLIC_STATIC_DEMO === "1" ? "#/f/online" : "/f/online"} className="ml-auto text-sm text-brand underline sm:ml-4">Back to the shop admin</a>}
         </div>
       </header>
       <main className="mx-auto grid max-w-5xl gap-8 px-4 py-8 lg:grid-cols-[1fr_320px]">

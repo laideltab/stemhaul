@@ -37,3 +37,7 @@ Next.js (App Router) + TypeScript, Tailwind CSS, Zustand for the in-browser demo
 - `src/lib/store.ts`: every action (create PO, print labels, book freight, scan, deliver, receive, sell, close cash…)
 - `src/app/(app)/w/*`: wholesale screens · `f/*`: florist screens · `farm/*`: farm portal · `qb`, `users`, `admin`
 - `src/app/shop/[slug]`: public web shop
+
+## Single-file demo build
+
+`node demo/build.mjs` bundles the whole app into one HTML file (`demo/dist/stemhaul-demo.html`) with hash routing, so it can be hosted anywhere as a static page. Shims for `next/link` and `next/navigation` live in `demo/shims`.

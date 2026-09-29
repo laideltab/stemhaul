@@ -53,6 +53,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const path = usePathname();
   const [open, setOpen] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   useEffect(() => {
     if (hydrated && !session) router.replace("/");
@@ -115,11 +116,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <button
           onClick={() => {
-            if (confirm("Reset all demo data to the original fake data?")) resetDemo();
+            if (!confirmReset) return setConfirmReset(true);
+            resetDemo();
+            setConfirmReset(false);
           }}
-          className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 hover:bg-sidebar-active/60"
+          onBlur={() => setConfirmReset(false)}
+          className={cn("flex w-full items-center gap-2 rounded-lg px-2.5 py-2 hover:bg-sidebar-active/60", confirmReset && "bg-bad text-white hover:bg-bad")}
         >
-          <RefreshCw size={16} /> Reset demo data
+          <RefreshCw size={16} /> {confirmReset ? "Click again to reset" : "Reset demo data"}
         </button>
         <button onClick={() => { signOut(); router.push("/"); }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 hover:bg-sidebar-active/60">
           <LogOut size={16} /> Switch account
