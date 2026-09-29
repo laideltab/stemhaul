@@ -3,28 +3,25 @@
 import type { Box } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { BOX_SIZE } from "@/lib/selectors";
+import { code128B } from "@/lib/code128";
 
-// Visual stand-in for a barcode: bar widths derived from the code's characters.
+// Real Code 128 barcode of the box code, so a scanner gun reads it; 10-module quiet zone on each side.
 function Bars({ code, className, vertical }: { code: string; className?: string; vertical?: boolean }) {
-  const bars: number[] = [];
-  for (const ch of code) {
-    const c = ch.charCodeAt(0);
-    bars.push(1 + (c % 3), 1 + ((c >> 2) % 2), 1 + ((c >> 3) % 3), 1 + ((c >> 1) % 2));
-  }
-  let x = 0;
-  const len = bars.reduce((a, b) => a + b, 0) + 4;
+  const widths = code128B(code);
+  const quiet = 10;
+  const len = widths.reduce((a, b) => a + b, 0) + quiet * 2;
+  // Start offset of each element, computed before render.
+  const starts = widths.map((_, i) => quiet + widths.slice(0, i).reduce((a, b) => a + b, 0));
   return (
-    <svg viewBox={vertical ? `0 0 40 ${len}` : `0 0 ${len} 40`} className={className} preserveAspectRatio="none" aria-label={`Barcode ${code}`}>
-      {bars.map((w, i) => {
-        const r =
-          i % 2 !== 0 ? null : vertical ? (
-            <rect key={i} x={0} y={x + 2} width={40} height={w} fill="black" />
-          ) : (
-            <rect key={i} x={x + 2} y={0} width={w} height={40} fill="black" />
-          );
-        x += w;
-        return r;
-      })}
+    <svg viewBox={vertical ? `0 0 40 ${len}` : `0 0 ${len} 40`} className={className} preserveAspectRatio="none" shapeRendering="crispEdges" role="img" aria-label={`Barcode ${code}`}>
+      <rect width={vertical ? 40 : len} height={vertical ? len : 40} fill="white" />
+      {widths.map((w, i) =>
+        i % 2 !== 0 ? null : vertical ? (
+          <rect key={i} x={0} y={starts[i]} width={40} height={w} fill="black" />
+        ) : (
+          <rect key={i} x={starts[i]} y={0} width={w} height={40} fill="black" />
+        ),
+      )}
     </svg>
   );
 }
