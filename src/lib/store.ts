@@ -39,6 +39,7 @@ interface Actions {
   createPO: (farmId: string, shipDate: string, lines: POLine[], send: boolean) => string;
   sendPO: (poId: string) => void;
   farmConfirmPO: (poId: string, confirmed: number[]) => void;
+  farmDispatchPO: (poId: string, invoiceNumber: string) => Result;
   assignAwb: (awb: AwbInput, lines: LineRef[]) => Result;
   removeFromAwb: (lines: LineRef[]) => void;
   printLabels: (opts: { poId?: string; awbId?: string }) => void;
@@ -155,6 +156,25 @@ export const useStore = create<Store>()(
               p.id === poId ? { ...p, status: "confirmed", lines: p.lines.map((l, i) => ({ ...l, confirmedBoxes: Math.max(0, Math.min(l.boxes, confirmed[i] ?? l.boxes)) })) } : p,
             ),
           })),
+        // Last farm step: boxes are at the cargo agency and the farm invoice goes to the importer's payables.
+        farmDispatchPO: (poId, invoiceNumber) => {
+          const s = get();
+          const po = s.pos.find((p) => p.id === poId);
+          if (!po || po.status !== "labeled" || po.dispatchedAt) return { ok: false, message: "Print every label before dispatching." };
+          const inv = invoiceNumber.trim();
+          if (!inv) return { ok: false, message: "Type your invoice number." };
+          const farm = s.orgs.find((o) => o.id === po.farmId)!;
+          const total = po.lines.reduce((a, l) => a + (l.confirmedBoxes ?? 0) * l.stemsPerBox * l.pricePerStemCents, 0);
+          const at = now();
+          const due = new Date();
+          due.setDate(due.getDate() + 15);
+          set((st) => ({
+            pos: st.pos.map((p) => (p.id === poId ? { ...p, dispatchedAt: at, farmInvoice: inv } : p)),
+            bills: [...st.bills, { id: `bill_${next("bill")}`, ownerOrgId: po.wholesalerId, vendor: farm.name, reference: `Farm invoice ${inv} · ${po.number}`, date: today(), dueDate: due.toISOString().slice(0, 10), totalCents: total, paidCents: 0 }],
+          }));
+          const buyer = s.orgs.find((o) => o.id === po.wholesalerId);
+          return { ok: true, message: `${po.number} dispatched. ${buyer?.shortName ?? buyer?.name} got invoice ${inv} for ${(total / 100).toLocaleString("en-US", { style: "currency", currency: "USD" })}.` };
+        },
         assignAwb: (input, refs) => {
           if (!refs.length) return { ok: false, message: "Select at least one line." };
           const number = input.number.trim();
@@ -634,6 +654,6 @@ export const useStore = create<Store>()(
         },
       };
     },
-    { name: "stemhaul-demo-v6" },
+    { name: "stemhaul-demo-v7" },
   ),
 );

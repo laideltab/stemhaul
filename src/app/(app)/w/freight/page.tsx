@@ -70,7 +70,7 @@ export default function AWBSummary() {
                           <div className="overflow-x-auto">
                             <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted">Lines</div>
                             <table className="w-full text-xs">
-                              <thead><tr className="text-left text-muted"><th className="py-1 pr-3">House AWB</th><th className="pr-3">PO #</th><th className="pr-3">Vendor</th><th className="pr-3">Product</th><th className="pr-3">Qty</th><th className="pr-3">Customer</th></tr></thead>
+                              <thead><tr className="text-left text-muted"><th className="py-1 pr-3">House AWB</th><th className="pr-3">PO #</th><th className="pr-3">Vendor</th><th className="pr-3">Product</th><th className="pr-3">Qty</th><th className="pr-3">Customer</th><th className="pr-3">Farm</th></tr></thead>
                               <tbody>
                                 {lines.map(({ p, l, i }) => (
                                   <tr key={`${p.id}:${i}`} className="border-t border-line">
@@ -80,6 +80,7 @@ export default function AWBSummary() {
                                     <td className="pr-3">{productName(s.products.find((x) => x.id === l.productId))}</td>
                                     <td className="pr-3">{l.confirmedBoxes} {l.boxType}</td>
                                     <td className="pr-3 font-mono">{s.contacts.find((c) => c.id === l.customerId)?.code ?? "STOCK"}</td>
+                                    <td className="pr-3">{p.dispatchedAt ? <span className="text-good">Dispatched · {p.farmInvoice}</span> : <span className="text-muted">Not dispatched</span>}</td>
                                   </tr>
                                 ))}
                               </tbody>

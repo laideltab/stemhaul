@@ -94,6 +94,9 @@ export interface PurchaseOrder {
   marketOrderId?: string;
   /** Prebook this PO was created from. */
   prebookId?: string;
+  /** Farm handed the labeled boxes to the cargo agency and sent its invoice. */
+  dispatchedAt?: string;
+  farmInvoice?: string;
 }
 
 export type BoxStatus = "labeled" | "in_transit" | "received" | "delivered" | "missing" | "damaged";

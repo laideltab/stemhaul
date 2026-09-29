@@ -298,10 +298,12 @@ export function buildSeed(): Data {
   let billN = 0;
   for (const po of pos.filter((p) => p.status === "received" || p.status === "shipped")) {
     billN++;
+    po.dispatchedAt = `${addDays(po.shipDate, 0)}T14:00:00.000Z`;
+    po.farmInvoice = `F-${20400 + billN * 7}`;
     const farm = orgs.find((o) => o.id === po.farmId)!;
     const total = po.lines.reduce((s, l) => s + l.boxes * l.stemsPerBox * l.pricePerStemCents, 0);
     bills.push({
-      id: `bill_${billN}`, ownerOrgId: LUCYS, vendor: farm.name, reference: `Farm invoice for ${po.number}`,
+      id: `bill_${billN}`, ownerOrgId: LUCYS, vendor: farm.name, reference: `Farm invoice ${po.farmInvoice} · ${po.number}`,
       date: po.shipDate, dueDate: addDays(po.shipDate, 15),
       totalCents: total, paidCents: po.status === "received" && po.number < "PO-1043" ? total : 0,
     });
