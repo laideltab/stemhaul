@@ -26,11 +26,12 @@ import Admin from "@/app/(app)/admin/page";
 import Shop from "@/app/shop/[slug]/page";
 
 type Page = ComponentType<{ params: Promise<Record<string, string>> }>;
-const routes: [RegExp, Page, boolean][] = [
+// [pattern, page, inside the app shell, name of the captured path segment]
+const routes: [RegExp, Page, boolean, string?][] = [
   [/^\/w$/, W as Page, true],
   [/^\/w\/purchase-orders$/, POs as Page, true],
   [/^\/w\/purchase-orders\/new$/, NewPO as Page, true],
-  [/^\/w\/purchase-orders\/(?<id>[^/]+)$/, PODetail as Page, true],
+  [/^\/w\/purchase-orders\/([^/]+)$/, PODetail as Page, true, "id"],
   [/^\/w\/freight$/, Freight as Page, true],
   [/^\/w\/receiving$/, Receiving as Page, true],
   [/^\/w\/deliveries$/, Deliveries as Page, true],
@@ -43,11 +44,11 @@ const routes: [RegExp, Page, boolean][] = [
   [/^\/f\/online$/, Online as Page, true],
   [/^\/f\/cash-close$/, CashClose as Page, true],
   [/^\/farm$/, Farm as Page, true],
-  [/^\/farm\/labels\/(?<id>[^/]+)$/, Labels as Page, true],
+  [/^\/farm\/labels\/([^/]+)$/, Labels as Page, true, "id"],
   [/^\/qb$/, QB as Page, true],
   [/^\/users$/, Users as Page, true],
   [/^\/admin$/, Admin as Page, true],
-  [/^\/shop\/(?<slug>[^/]+)$/, Shop as Page, false],
+  [/^\/shop\/([^/]+)$/, Shop as Page, false, "slug"],
 ];
 
 // use(params) needs the same promise object on every render.
@@ -59,10 +60,10 @@ const paramsFor = (path: string, groups: Record<string, string>) => {
 
 function App() {
   const path = usePathname();
-  for (const [re, C, inShell] of routes) {
+  for (const [re, C, inShell, param] of routes) {
     const m = path.match(re);
     if (!m) continue;
-    const page = <C key={path} params={paramsFor(path, { ...(m.groups ?? {}) })} />;
+    const page = <C key={path} params={paramsFor(path, param ? { [param]: m[1] } : {})} />;
     return inShell ? <AppShell>{page}</AppShell> : page;
   }
   return <Home />;
