@@ -32,10 +32,14 @@ function AssistantPanel({ orgId, userId }: { orgId: string; userId: string }) {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
-  const endRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  useEffect(() => endRef.current?.scrollIntoView({ block: "end" }), [msgs, busy]);
+  // Scroll only the chat list, never the page behind it.
+  useEffect(() => {
+    const el = listRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [msgs, busy]);
   useEffect(() => () => abortRef.current?.abort(), []);
 
   const org = orgs.find((o) => o.id === orgId);
@@ -70,6 +74,13 @@ function AssistantPanel({ orgId, userId }: { orgId: string; userId: string }) {
         const j = await res.json().catch(() => null);
         throw new Error(j?.message ?? "The assistant is not available right now.");
       }
+      // Streamed text arrives in many tiny pieces; render it at most once per frame.
+      let pending = "";
+      let frame = 0;
+      const push = (t: string) => {
+        pending += t;
+        if (!frame) frame = requestAnimationFrame(() => { frame = 0; const t2 = pending; pending = ""; append(t2); });
+      };
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let buf = "";
@@ -82,12 +93,14 @@ function AssistantPanel({ orgId, userId }: { orgId: string; userId: string }) {
         for (const line of lines) {
           if (!line) continue;
           const ev = JSON.parse(line) as { t: string; v?: string };
-          if (ev.t === "text") { setBusy(null); append(ev.v ?? ""); }
+          if (ev.t === "text") { setBusy(null); push(ev.v ?? ""); }
           else if (ev.t === "tool") setBusy(TOOL_LABEL[ev.v ?? ""] ?? "Looking it up");
-          else if (ev.t === "break") append("\n\n");
-          else if (ev.t === "error") append(ev.v ?? "Something went wrong.", true);
+          else if (ev.t === "break") push("\n\n");
+          else if (ev.t === "error") push(ev.v ?? "Something went wrong.");
         }
       }
+      if (frame) cancelAnimationFrame(frame);
+      if (pending) append(pending);
     } catch (e) {
       if (ctrl.signal.aborted) return;
       append(e instanceof Error ? e.message : "Something went wrong.", true);
@@ -124,7 +137,7 @@ function AssistantPanel({ orgId, userId }: { orgId: string; userId: string }) {
             </button>
           </div>
 
-          <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 text-sm">
+          <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-4 text-sm">
             {msgs.length === 0 && (
               <div>
                 <p className="text-muted">Ask about your shipments, AWBs, flights, boxes, orders or invoices, in English or Spanish.</p>
@@ -153,7 +166,6 @@ function AssistantPanel({ orgId, userId }: { orgId: string; userId: string }) {
                 <Loader2 size={14} className="animate-spin" /> {busy}…
               </div>
             )}
-            <div ref={endRef} />
           </div>
 
           <form
