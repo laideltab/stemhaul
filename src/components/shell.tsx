@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/format";
+import { LOGO_ICON, LOGO_MARK } from "@/lib/brand";
 
 const noop = () => () => {};
 /** False during server render and the first client pass, so persisted demo data never causes a hydration mismatch. */
@@ -100,7 +101,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const sidebar = (
     <nav className="flex h-full flex-col bg-sidebar text-sidebar-fg">
       <div className="flex items-center gap-2 px-5 py-5">
-        <div className="grid size-8 place-items-center rounded-lg bg-sidebar-active"><Flower2 size={18} className="text-white" /></div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={LOGO_MARK} alt="" className="h-9 w-auto" />
         <div>
           <div className="font-display text-lg font-semibold leading-none text-white">Stem Haul</div>
           <div className="text-[11px] uppercase tracking-wider text-sidebar-fg/70">Demo</div>
@@ -169,6 +171,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="min-w-0 flex-1">
         <div className="no-print sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-bg/90 px-4 py-2.5 backdrop-blur lg:hidden">
           <button onClick={() => setOpen(true)} aria-label="Open menu" className="rounded-lg p-1.5 hover:bg-surface-2"><Menu size={20} /></button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={LOGO_ICON} alt="" className="size-6 rounded" />
           <span className="font-display font-semibold">Stem Haul</span>
           <span className="truncate text-sm text-muted">{isAdmin ? "License Admin" : org?.name}</span>
         </div>

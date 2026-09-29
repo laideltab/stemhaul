@@ -1,10 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Flower2, ShieldCheck, Store, Tractor, Warehouse } from "lucide-react";
+import { ShieldCheck, Store, Tractor, Warehouse } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { useHydrated } from "@/components/shell";
 import { Card } from "@/components/ui";
+import { LOGO_WORDMARK } from "@/lib/brand";
 
 const home: Record<string, string> = { wholesaler: "/w", florist: "/f", farm: "/farm" };
 
@@ -31,10 +32,10 @@ export default function DemoSignIn() {
     <div className="min-h-screen">
       <div className="bg-sidebar text-sidebar-fg">
         <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
-          <div className="flex items-center gap-2">
-            <div className="grid size-9 place-items-center rounded-lg bg-sidebar-active"><Flower2 size={20} className="text-white" /></div>
-            <span className="font-display text-2xl font-semibold text-white">Stem Haul</span>
-            <span className="ml-2 rounded-full bg-white/10 px-2 py-0.5 text-xs">Demo · fake data</span>
+          <div className="flex flex-wrap items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={LOGO_WORDMARK} alt="Stem Haul · From farm to register" className="h-14 w-auto sm:h-16" />
+            <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs">Demo · fake data</span>
           </div>
           <h1 className="mt-6 max-w-2xl font-display text-3xl font-semibold leading-tight text-white sm:text-4xl">
             From the farm to the florist&apos;s counter, one box at a time.

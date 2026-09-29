@@ -2,6 +2,7 @@
 
 import { use, useState } from "react";
 import { Flower2, ShoppingBag } from "lucide-react";
+import { LOGO_ICON } from "@/lib/brand";
 import { useStore, type CartLine } from "@/lib/store";
 import { money } from "@/lib/format";
 import { stockByProduct } from "@/lib/selectors";
@@ -82,6 +83,10 @@ export default function WebShop({ params }: { params: Promise<{ slug: string }> 
           )}
         </Card>
       </main>
+      <footer className="mx-auto flex max-w-5xl items-center gap-2 px-4 pb-8 text-xs text-muted">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={LOGO_ICON} alt="" className="size-5 rounded" /> Online shop powered by Stem Haul
+      </footer>
     </div>
   );
 }
