@@ -166,6 +166,8 @@ export interface Bill {
   dueDate: string;
   totalCents: number;
   paidCents: number;
+  /** Payments sent to the vendor (wire, check...). */
+  payments?: InvoicePayment[];
 }
 
 // ---- Farm marketplace ----

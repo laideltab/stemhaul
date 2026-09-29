@@ -47,7 +47,7 @@ interface Actions {
   markBox: (boxId: string, status: "missing" | "damaged" | "received") => void;
   deliverBoxes: (customerId: string, boxIds: string[], pricePerStemCents: Record<string, number>) => string;
   recordPayment: (invoiceId: string, payment: Omit<InvoicePayment, "id">) => void;
-  payBill: (billId: string) => void;
+  payBill: (billId: string, payment: Omit<InvoicePayment, "id">) => void;
 
   setCart: (listingId: string, boxes: number) => void;
   placeMarketOrders: (delivery: MarketOrder["delivery"], payment: MarketOrder["payment"]) => string[];
@@ -281,7 +281,12 @@ export const useStore = create<Store>()(
             ),
           }));
         },
-        payBill: (billId) => set((s) => ({ bills: s.bills.map((b) => (b.id === billId ? { ...b, paidCents: b.totalCents } : b)) })),
+        payBill: (billId, payment) => {
+          const pay = { ...payment, id: `pay_${next("pay")}` };
+          set((s) => ({
+            bills: s.bills.map((b) => (b.id === billId ? { ...b, payments: [...(b.payments ?? []), pay], paidCents: Math.min(b.totalCents, b.paidCents + payment.amountCents) } : b)),
+          }));
+        },
 
         setCart: (listingId, boxes) =>
           set((s) => {

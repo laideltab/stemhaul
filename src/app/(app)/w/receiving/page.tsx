@@ -5,6 +5,7 @@ import { ScanLine } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { productName } from "@/lib/selectors";
 import { cn, time } from "@/lib/format";
+import { CameraScan } from "@/components/camera-scan";
 import { Button, Card, CardHeader, Empty, inputCls, PageHeader, Status, Table } from "@/components/ui";
 
 export default function ScanReceiving() {
@@ -16,17 +17,17 @@ export default function ScanReceiving() {
   const myPoIds = new Set(s.pos.filter((p) => p.wholesalerId === orgId).map((p) => p.id));
   const pending = s.awbs.filter((a) => s.boxes.some((b) => b.awbId === a.id && myPoIds.has(b.poId) && b.status === "in_transit"));
 
-  const scan = (c: string) => {
+  const scan = (c: string, focus = true) => {
     if (!c.trim()) return;
     const r = s.scanReceive(c);
     setLog((l) => [{ ...r, at: new Date().toISOString() }, ...l].slice(0, 12));
     setCode("");
-    ref.current?.focus();
+    if (focus) ref.current?.focus();
   };
 
   return (
     <>
-      <PageHeader title="Scan Receiving" sub="Scan each box as it comes off the truck in Miami. A USB or Bluetooth scanner types the label code and presses Enter." />
+      <PageHeader title="Scan Receiving" sub="Scan each box as it comes off the truck in Miami. Use a USB or Bluetooth scanner gun, or the camera of a phone or tablet." />
       <div className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
         <div className="grid content-start gap-6">
           <Card className="p-4">
@@ -36,6 +37,7 @@ export default function ScanReceiving() {
                 <input ref={ref} autoFocus value={code} onChange={(e) => setCode(e.target.value)} placeholder="Scan or type a box label, e.g. IT558465007" className={cn(inputCls, "h-11 pl-10 font-mono text-base")} />
               </div>
               <Button className="h-11">Receive</Button>
+              <CameraScan onScan={(c) => scan(c, false)} last={log[0] ?? null} />
             </form>
           </Card>
 

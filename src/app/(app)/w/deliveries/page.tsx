@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { date, money, num, perStem } from "@/lib/format";
 import { productName } from "@/lib/selectors";
-import { Badge, Button, Card, CardHeader, Empty, Field, inputCls, Notice, PageHeader, Status, Table } from "@/components/ui";
+import { Badge, Button, Card, CardHeader, Empty, Field, inputCls, LinkButton, Notice, PageHeader, Status, Table } from "@/components/ui";
 
 const markup: Record<string, number> = { Rose: 1.55, Carnation: 1.7, Alstroemeria: 1.6, Hydrangea: 1.45, Gypsophila: 1.6, Eucalyptus: 1.6 };
 
@@ -15,7 +16,7 @@ export default function Deliveries() {
   const [customerId, setCustomerId] = useState(customers[0]?.id ?? "");
   const [sel, setSel] = useState<string[]>(() => s.boxes.filter((b) => b.status === "received" && b.customerId === (customers[0]?.id ?? "")).map((b) => b.id));
   const [prices, setPrices] = useState<Record<string, number>>({});
-  const [msg, setMsg] = useState<{ ok: boolean; message: string } | null>(null);
+  const [msg, setMsg] = useState<{ ok: boolean; message: string; invId?: string } | null>(null);
   const poIds = new Set(s.pos.filter((p) => p.wholesalerId === orgId).map((p) => p.id));
   const inWarehouse = s.boxes.filter((b) => poIds.has(b.poId) && b.status === "received");
   const presoldFor = (cid: string) => inWarehouse.filter((b) => b.customerId === cid).map((b) => b.id);
@@ -42,8 +43,8 @@ export default function Deliveries() {
   const deliver = () => {
     const p: Record<string, number> = {};
     for (const b of selected) p[b.productId] = price(b.productId);
-    s.deliverBoxes(customerId, sel, p);
-    setMsg({ ok: true, message: `Delivered ${sel.length} boxes to ${cust?.name}. Invoice created${cust?.linkedOrgId ? "; the boxes now show up in their Stem Haul receiving." : "."}` });
+    const invId = s.deliverBoxes(customerId, sel, p);
+    setMsg({ ok: true, invId, message: `Delivered ${sel.length} boxes to ${cust?.name}. Invoice created${cust?.linkedOrgId ? "; the boxes now show up in their Stem Haul receiving." : "."}` });
     setSel([]);
   };
 
@@ -72,6 +73,7 @@ export default function Deliveries() {
             </div>
           )}
           <Notice result={msg} />
+          {msg?.invId && <div><LinkButton variant="secondary" href={`/w/invoices/${msg.invId}`}>Open the invoice</LinkButton></div>}
           {available.length ? (
             <Table className="rounded-lg border border-line">
               <thead><tr><th><input type="checkbox" checked={sel.length === available.length} onChange={(e) => setSel(e.target.checked ? available.map((b) => b.id) : [])} aria-label="Select all" /></th><th>Label</th><th>For</th><th>Product</th><th>Box</th><th className="num">Stems</th><th className="num">Cost/stem</th><th className="num">Price/stem</th></tr></thead>
@@ -103,16 +105,17 @@ export default function Deliveries() {
       <Card>
         <CardHeader title="Invoices" />
         <Table>
-          <thead><tr><th>Invoice</th><th>Customer</th><th>Date</th><th className="num">Boxes</th><th className="num">Total</th><th>Status</th></tr></thead>
+          <thead><tr><th>Invoice</th><th>Customer</th><th>Date</th><th className="num">Boxes</th><th className="num">Total</th><th>Status</th><th /></tr></thead>
           <tbody>
             {invoices.map((i) => (
               <tr key={i.id}>
-                <td className="font-medium">{i.number}</td>
+                <td className="font-medium"><Link className="text-brand underline" href={`/w/invoices/${i.id}`}>{i.number}</Link></td>
                 <td>{s.contacts.find((c) => c.id === i.customerId)?.name}</td>
                 <td>{date(i.date)}</td>
                 <td className="num">{i.lines.length}</td>
                 <td className="num">{money(i.totalCents)}</td>
                 <td><Status value={i.paidCents >= i.totalCents ? "paid" : i.paidCents > 0 ? "partial" : "open"} /></td>
+                <td className="text-right"><LinkButton variant="secondary" className="h-7 px-2 text-xs" href={`/w/invoices/${i.id}`}>View</LinkButton></td>
               </tr>
             ))}
           </tbody>

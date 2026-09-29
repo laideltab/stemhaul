@@ -5,6 +5,7 @@ import { Plus, ScanLine, Trash2 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { cn, dateTime, money } from "@/lib/format";
 import { productName } from "@/lib/selectors";
+import { CameraScan } from "@/components/camera-scan";
 import { Badge, Button, Card, CardHeader, Empty, Field, inputCls, Notice, PageHeader, Table } from "@/components/ui";
 import type { Receipt } from "@/lib/types";
 
@@ -21,11 +22,11 @@ export default function ReceiveBoxes() {
   const [lines, setLines] = useState<Receipt["lines"]>([{ productId: "p_gyp", stems: 50, costPerStemCents: 35 }]);
   const receipts = s.receipts.filter((r) => r.orgId === orgId).sort((a, b) => b.at.localeCompare(a.at));
 
-  const scan = (c: string) => {
+  const scan = (c: string, focus = true) => {
     if (!c.trim()) return;
     setRes(s.floristScanBox(c));
     setCode("");
-    ref.current?.focus();
+    if (focus) ref.current?.focus();
   };
 
   return (
@@ -41,6 +42,7 @@ export default function ReceiveBoxes() {
                 <input ref={ref} value={code} onChange={(e) => setCode(e.target.value)} placeholder="Scan box label" className={cn(inputCls, "h-11 pl-10 font-mono")} />
               </div>
               <Button className="h-11">Receive</Button>
+              <CameraScan onScan={(c) => scan(c, false)} last={res} />
             </form>
             <Notice result={res} />
           </div>
