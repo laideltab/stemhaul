@@ -89,3 +89,6 @@ export function orderStages(d: D, o: MarketOrder): Stage[] {
     { label: "At your shop", done: delivered, sub: o.delivery === "pickup" ? "you pick up" : "delivered" },
   ];
 }
+
+/** How florist-facing sentences name the importer. */
+export const shortName = (o: Pick<Org, "name" | "shortName">) => o.shortName ?? o.name;

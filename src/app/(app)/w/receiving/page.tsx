@@ -33,7 +33,7 @@ export default function ScanReceiving() {
             <form onSubmit={(e) => { e.preventDefault(); scan(code); }} className="flex gap-2">
               <div className="relative flex-1">
                 <ScanLine size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-                <input ref={ref} autoFocus value={code} onChange={(e) => setCode(e.target.value)} placeholder="Scan or type a box label, e.g. LF558465007" className={cn(inputCls, "h-11 pl-10 font-mono text-base")} />
+                <input ref={ref} autoFocus value={code} onChange={(e) => setCode(e.target.value)} placeholder="Scan or type a box label, e.g. IT558465007" className={cn(inputCls, "h-11 pl-10 font-mono text-base")} />
               </div>
               <Button className="h-11">Receive</Button>
             </form>

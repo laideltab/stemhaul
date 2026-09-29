@@ -24,7 +24,7 @@ export default function WholesaleDashboard() {
 
   return (
     <>
-      <PageHeader title="Dashboard" sub="Lucy's Flowers · wholesale" actions={<LinkButton href="/w/purchase-orders/new">New purchase order</LinkButton>} />
+      <PageHeader title="Dashboard" sub="International Trading and Services (ITS) · wholesale" actions={<LinkButton href="/w/purchase-orders/new">New purchase order</LinkButton>} />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Open purchase orders" value={openPOs.length} sub={`${pos.filter((p) => p.status === "sent").length} waiting on farm`} />
         <Stat label="Boxes in transit" value={inTransit.length} sub={`${num(inTransit.reduce((a, b) => a + b.stems, 0))} stems`} />

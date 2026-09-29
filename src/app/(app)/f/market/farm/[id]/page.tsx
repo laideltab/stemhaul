@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { cn, date, money, num, perStem } from "@/lib/format";
-import { importerFor, mapFarmsFor } from "@/lib/market";
+import { importerFor, shortName, mapFarmsFor } from "@/lib/market";
 import { FlowerBand, Stepper } from "@/components/market-ui";
 import { Badge, Card, Empty, LinkButton } from "@/components/ui";
 
@@ -46,7 +46,7 @@ export default function FarmShop({ params }: { params: Promise<{ id: string }> }
           <p className="text-sm text-sidebar-fg/80">{view.farm.city} · {view.farm.tagline}</p>
         </div>
         <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
-          <div><dt className="text-sidebar-fg/70">Sold and delivered by</dt><dd className="font-semibold text-white">{importer.name}</dd></div>
+          <div><dt className="text-sidebar-fg/70">Sold and delivered by</dt><dd className="font-semibold text-white">{shortName(importer)}</dd></div>
           <div><dt className="text-sidebar-fg/70">Flies</dt><dd className="font-semibold text-white">{date(ship.toISOString())} · {view.farm.origin} → MIA</dd></div>
           <div><dt className="text-sidebar-fg/70">At your shop</dt><dd className="font-semibold text-white">{date(arrive.toISOString())}</dd></div>
           <div><dt className="text-sidebar-fg/70">Confirms</dt><dd className="font-semibold text-white">within 4 h</dd></div>
@@ -102,7 +102,7 @@ export default function FarmShop({ params }: { params: Promise<{ id: string }> }
         <Card className="h-fit lg:sticky lg:top-6">
           <div className="border-b border-line px-4 py-3">
             <h2 className="font-display text-base font-semibold">Your order</h2>
-            <p className="text-xs text-muted">{view.farm.name} · delivered by {importer.name} {date(arrive.toISOString())}</p>
+            <p className="text-xs text-muted">{view.farm.name} · delivered by {shortName(importer)} {date(arrive.toISOString())}</p>
           </div>
           <div className="grid gap-3 p-4">
             {mine.map((l) => {

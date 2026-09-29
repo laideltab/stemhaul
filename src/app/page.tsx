@@ -24,7 +24,7 @@ export default function DemoSignIn() {
 
   const accounts = [
     { orgId: "org_lucys", icon: <Warehouse size={20} />, blurb: "Importer / wholesaler. Runs the farm map, buys from farms, books freight, receives in Miami and delivers to florists." },
-    { orgId: "org_mari", icon: <Store size={20} />, blurb: "Florist shop. Buys from farms on Lucy's map, receives the boxes, makes bunches, sells in store and online, closes cash per cashier." },
+    { orgId: "org_mari", icon: <Store size={20} />, blurb: "Florist shop. Buys from farms on ITS map, receives the boxes, makes bunches, sells in store and online, closes cash per cashier." },
     { orgId: "org_esperanza", icon: <Tractor size={20} />, blurb: "Farm portal. Confirms map orders and purchase orders, lists its flowers and prints box labels." },
   ];
 
@@ -89,10 +89,10 @@ export default function DemoSignIn() {
         <Card className="p-5">
           <h2 className="font-display text-lg font-semibold">Try the full flow</h2>
           <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted">
-            <li><b className="text-fg">Lucy&apos;s</b>: create a purchase order to Finca La Esperanza and send it.</li>
+            <li><b className="text-fg">ITS</b>: create a purchase order to Finca La Esperanza and send it.</li>
             <li><b className="text-fg">Farm</b>: confirm the order and print the box labels.</li>
-            <li><b className="text-fg">Lucy&apos;s</b>: book freight (master AWB + house AWB), then scan the boxes in at Scan Receiving.</li>
-            <li><b className="text-fg">Lucy&apos;s</b>: deliver boxes to Mari Flowers; an invoice (A/R) is created.</li>
+            <li><b className="text-fg">ITS</b>: book freight (master AWB + house AWB), then scan the boxes in at Scan Receiving.</li>
+            <li><b className="text-fg">ITS</b>: deliver boxes to Mari Flowers; an invoice (A/R) is created.</li>
             <li><b className="text-fg">Mari</b>: scan the boxes at Receive Boxes, make bunches, sell at the POS and close the cash drawer.</li>
           </ol>
         </Card>

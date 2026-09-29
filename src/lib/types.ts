@@ -10,6 +10,8 @@ export interface Org {
   city: string;
   /** Short code printed on labels (vendor code for farms). */
   code: string;
+  /** Short name for running text, e.g. "ITS". */
+  shortName?: string;
   address?: string;
   phone?: string;
   /** Airport code farms ship from. */

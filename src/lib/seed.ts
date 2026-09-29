@@ -62,7 +62,7 @@ export function buildSeed(): Data {
   const pick = <T,>(xs: T[]) => xs[Math.floor(r() * xs.length)];
 
   const orgs: Org[] = [
-    { id: LUCYS, name: "Lucy's Flowers", kind: "wholesaler", city: "Miami, FL", code: "LF", address: "1617 NW 84th Ave, Miami, FL 33126", phone: "(786) 486-6482", modules: ["wholesale"], plan: "Pro", billing: "active", since: "2026-01-15" },
+    { id: LUCYS, name: "International Trading and Services (ITS)", shortName: "ITS", kind: "wholesaler", city: "Miami, FL", code: "ITS", address: "1617 NW 84th Ave, Miami, FL 33126", phone: "(786) 486-6482", modules: ["wholesale"], plan: "Pro", billing: "active", since: "2026-01-15" },
     { id: MARI, name: "Mari Flowers", kind: "florist", city: "Miami, FL", code: "MF", modules: ["florist"], plan: "Starter", billing: "active", since: "2026-03-02" },
     { id: "org_bloom", name: "Bloom & Co", kind: "florist", city: "Doral, FL", code: "BC", modules: ["florist"], plan: "Starter", billing: "trial", since: "2026-09-10" },
     { id: "org_petal", name: "Petal Supply Group", kind: "wholesaler", city: "Medley, FL", code: "PS", modules: ["wholesale", "florist"], plan: "Enterprise", billing: "past_due", since: "2026-05-20" },
@@ -76,10 +76,10 @@ export function buildSeed(): Data {
   ];
 
   const users: User[] = [
-    { id: "u_lucy", orgId: LUCYS, name: "Lucy Ramírez", email: "lucy@lucysflowers.com", role: "owner", active: true },
-    { id: "u_carlos", orgId: LUCYS, name: "Carlos Mejía", email: "carlos@lucysflowers.com", role: "purchasing", active: true },
-    { id: "u_pedro", orgId: LUCYS, name: "Pedro Soto", email: "pedro@lucysflowers.com", role: "warehouse", active: true },
-    { id: "u_gloria", orgId: LUCYS, name: "Gloria Díaz", email: "gloria@lucysflowers.com", role: "accountant", active: true },
+    { id: "u_lucy", orgId: LUCYS, name: "Lucy Ramírez", email: "lucy@itsmiami.com", role: "owner", active: true },
+    { id: "u_carlos", orgId: LUCYS, name: "Carlos Mejía", email: "carlos@itsmiami.com", role: "purchasing", active: true },
+    { id: "u_pedro", orgId: LUCYS, name: "Pedro Soto", email: "pedro@itsmiami.com", role: "warehouse", active: true },
+    { id: "u_gloria", orgId: LUCYS, name: "Gloria Díaz", email: "gloria@itsmiami.com", role: "accountant", active: true },
     { id: "u_mari", orgId: MARI, name: "Mari González", email: "mari@mariflowers.com", role: "owner", active: true },
     { id: "u_ana", orgId: MARI, name: "Ana Torres", email: "ana@mariflowers.com", role: "cashier", active: true },
     { id: "u_luis", orgId: MARI, name: "Luis Pérez", email: "luis@mariflowers.com", role: "cashier", active: true },
@@ -135,7 +135,7 @@ export function buildSeed(): Data {
     { id: "c_bloom", ownerOrgId: LUCYS, kind: "customer", name: "Bloom & Co", country: "USA", linkedOrgId: "org_bloom", terms: "Net 15", code: "ITS1128" },
     { id: "c_kendall", ownerOrgId: LUCYS, kind: "customer", name: "Kendall Events", country: "USA", terms: "Net 30", code: "ITS1031" },
     { id: "c_sunset", ownerOrgId: LUCYS, kind: "customer", name: "Sunset Supermarkets", country: "USA", terms: "Net 30", code: "ITS1094" },
-    { id: "v_lucys", ownerOrgId: MARI, kind: "vendor", name: "Lucy's Flowers", country: "USA", linkedOrgId: LUCYS },
+    { id: "v_lucys", ownerOrgId: MARI, kind: "vendor", name: "International Trading and Services (ITS)", country: "USA", linkedOrgId: LUCYS },
     { id: "v_miamiwh", ownerOrgId: MARI, kind: "vendor", name: "Miami Wholesale Blooms", country: "USA" },
     { id: "v_greens", ownerOrgId: MARI, kind: "vendor", name: "Doral Greens Market", country: "USA" },
   ];
@@ -229,7 +229,7 @@ export function buildSeed(): Data {
         boxN++;
         boxes.push({
           id: `bx_${boxN}`,
-          code: `LF${String(558465000 + boxN * 7)}`,
+          code: `IT${String(558465000 + boxN * 7)}`,
           poId: po.id,
           lineIndex: li,
           productId: l.productId,
@@ -327,15 +327,15 @@ export function buildSeed(): Data {
   let mvN = 0;
   const mv = (m: Omit<StockMovement, "id" | "orgId">) => movements.push({ id: `mv_${++mvN}`, orgId: MARI, ...m });
 
-  // Receipts of boxes from Lucy's (already scanned in).
+  // Receipts of boxes from ITS (already scanned in).
   for (const inv of [marInv1, marInv2]) {
     const when = inv === marInv1 ? at(-7, 8, 30) : at(-5, 8, 30);
     const lines = inv.lines.map((l) => {
       const b = boxes.find((x) => x.id === l.boxId)!;
       return { productId: b.productId, stems: b.stems, costPerStemCents: l.pricePerStemCents, boxCode: b.code };
     });
-    receipts.push({ id: `rc_${receipts.length + 1}`, orgId: MARI, at: when, source: "stemhaul", supplier: "Lucy's Flowers", lines, totalCents: inv.totalCents });
-    for (const l of lines) mv({ at: when, productId: l.productId, stems: l.stems, type: "receive", note: `Box ${l.boxCode} from Lucy's Flowers`, userId: "u_mari" });
+    receipts.push({ id: `rc_${receipts.length + 1}`, orgId: MARI, at: when, source: "stemhaul", supplier: "International Trading and Services (ITS)", lines, totalCents: inv.totalCents });
+    for (const l of lines) mv({ at: when, productId: l.productId, stems: l.stems, type: "receive", note: `Box ${l.boxCode} from International Trading and Services (ITS)`, userId: "u_mari" });
   }
   // Third-party purchases in Miami.
   const manual: [number, string, [string, number, number][]][] = [
@@ -434,7 +434,7 @@ export function buildSeed(): Data {
     qb.push({ id: `qb_${inv.id}`, orgId: LUCYS, at: addDays(inv.date, 1) + "T11:00:00.000Z", kind: "invoices", description: `${inv.number} (A/R)`, count: 1, totalCents: inv.totalCents, status: "sent" });
   }
 
-  // ---------------- Farm marketplace (Lucy's map) ----------------
+  // ---------------- Farm marketplace (ITS map) ----------------
   const L = (farmId: string, rows: [string, BoxType, number, number, boolean?][]) =>
     rows.map(([productId, boxType, price, stock, listed = true]) => ({ farmId, productId, boxType, stemsPerBox: stemsFor(productId, boxType), farmPriceCents: price, stockBoxes: stock, listed }));
   const listings: Listing[] = [

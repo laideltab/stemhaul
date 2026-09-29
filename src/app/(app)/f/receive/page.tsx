@@ -33,7 +33,7 @@ export default function ReceiveBoxes() {
       <PageHeader title="Receive Boxes" sub="Boxes delivered by a wholesaler on Stem Haul arrive already loaded: just scan them. Purchases from other Miami suppliers are entered by hand." />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader title="From Lucy's Flowers" sub={`${incoming.length} boxes on the way to your shop`} />
+          <CardHeader title="From International Trading and Services (ITS)" sub={`${incoming.length} boxes on the way to your shop`} />
           <div className="grid gap-3 p-4">
             <form onSubmit={(e) => { e.preventDefault(); scan(code); }} className="flex gap-2">
               <div className="relative flex-1">
@@ -58,7 +58,7 @@ export default function ReceiveBoxes() {
               ))}
             </tbody>
           </Table>
-          {!incoming.length && <Empty>Nothing pending from Lucy&apos;s Flowers.</Empty>}
+          {!incoming.length && <Empty>Nothing pending from International Trading and Services (ITS).</Empty>}
         </Card>
 
         <Card>

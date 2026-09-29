@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Check, Clock, X } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { money, time } from "@/lib/format";
-import { orderStages, orderTotals } from "@/lib/market";
+import { orderStages, orderTotals, shortName } from "@/lib/market";
 import { Tracker } from "@/components/market-ui";
 import { FloristOrderList } from "@/components/florist-orders";
 import { Badge, Card, CardHeader, Empty, LinkButton, PageHeader, Table } from "@/components/ui";
@@ -28,7 +28,7 @@ export default function FloristMarketOrder({ params }: { params: Promise<{ id: s
     <>
       <PageHeader
         title={`Order ${o.number}`}
-        sub={`${farm.name} · sold and delivered by ${importer.name}`}
+        sub={`${farm.name} · sold and delivered by ${shortName(importer)}`}
         actions={<LinkButton variant="secondary" href="/f/market">Back to marketplace</LinkButton>}
       />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -50,7 +50,7 @@ export default function FloristMarketOrder({ params }: { params: Promise<{ id: s
                 <p className="text-sm text-muted">
                   Confirmed {got.boxes} of {asked.boxes} boxes at {time(o.confirmedAt!)}.
                   {short.map((l) => { const p = s.products.find((x) => x.id === l.productId)!; return ` ${p.variety} ${p.lengthCm} cm is ${l.confirmedBoxes} ${l.boxType} instead of ${l.boxes}.`; }).join("")}
-                  {" "}{importer.name} will invoice you {money(got.cents)}.
+                  {" "}{shortName(importer)} will invoice you {money(got.cents)}.
                 </p>
               </div>
             </Card>
@@ -93,7 +93,7 @@ export default function FloristMarketOrder({ params }: { params: Promise<{ id: s
               </tbody>
               <tfoot>
                 <tr className="border-t border-line">
-                  <td colSpan={4} className="px-4 py-3 text-sm text-muted">Delivered price{awb ? ` · ships on ${importer.name}'s AWB ${awb.number}` : ""}</td>
+                  <td colSpan={4} className="px-4 py-3 text-sm text-muted">Delivered price{awb ? ` · ships on ${shortName(importer)}'s AWB ${awb.number}` : ""}</td>
                   <td className="px-4 py-3 text-right font-semibold tabular-nums">{money(o.status === "confirmed" ? got.cents : asked.cents)}</td>
                   <td />
                 </tr>

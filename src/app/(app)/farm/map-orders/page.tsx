@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Bell } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { cn, date, money, num, perStem, time } from "@/lib/format";
-import { boxSummary, orderTotals, timeLeft } from "@/lib/market";
+import { boxSummary, orderTotals, shortName, timeLeft } from "@/lib/market";
 import { productName } from "@/lib/selectors";
 import { Badge, Button, Card, Empty, LinkButton, PageHeader, Table } from "@/components/ui";
 
@@ -23,7 +23,7 @@ export default function FarmMapOrders() {
   const list = all.filter((o) => o.status === tab);
   const o = all.find((x) => x.id === pick) ?? list[0];
   const newest = all.find((x) => x.status === "pending");
-  const name = (id: string) => s.orgs.find((x) => x.id === id)?.name ?? "";
+  const name = (id: string) => { const o = s.orgs.find((x) => x.id === id); return o ? shortName(o) : ""; };
   const stockOf = (lid: string) => s.listings.find((l) => l.id === lid)?.stockBoxes ?? 0;
 
   const confirmed = o ? o.lines.map((l, i) => (o.status === "pending" ? conf[`${o.id}:${i}`] ?? Math.min(l.boxes, stockOf(l.listingId)) : l.confirmedBoxes ?? 0)) : [];

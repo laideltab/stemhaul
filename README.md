@@ -12,7 +12,7 @@ All data is fake. It is generated in `src/lib/seed.ts` and kept in the browser's
 
 | Account | Type | Try it as |
 |---|---|---|
-| Lucy's Flowers | Wholesaler | Carlos (purchasing), Pedro (warehouse), Gloria (accountant), Lucy (owner) |
+| International Trading and Services (ITS) | Wholesaler | Carlos (purchasing), Pedro (warehouse), Gloria (accountant), Lucy (owner) |
 | Mari Flowers | Florist | Ana or Luis (cashiers), Mari (owner) |
 | Finca La Esperanza | Farm | Jorge |
 | Platform owner | Stem Haul | License Admin |

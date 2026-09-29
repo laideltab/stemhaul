@@ -193,7 +193,7 @@ export const useStore = create<Store>()(
             for (let i = have; i < (l.confirmedBoxes ?? 0); i++) {
               const n = next("box");
               newBoxes.push({
-                id: `bx_${n}`, code: `LF${558465000 + n * 7}`, poId: p.id, lineIndex: li, productId: l.productId, boxType: l.boxType,
+                id: `bx_${n}`, code: `IT${558465000 + n * 7}`, poId: p.id, lineIndex: li, productId: l.productId, boxType: l.boxType,
                 stems: l.stemsPerBox, costPerStemCents: l.pricePerStemCents, status: "labeled", hawb: l.hawb, awbId: l.awbId,
                 lot: next("lot"), customerId: l.customerId,
               });
@@ -480,6 +480,6 @@ export const useStore = create<Store>()(
         },
       };
     },
-    { name: "stemhaul-demo-v3" },
+    { name: "stemhaul-demo-v4" },
   ),
 );

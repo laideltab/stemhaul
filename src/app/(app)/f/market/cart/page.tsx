@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Truck, X } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { cn, date, money, num, perStem } from "@/lib/format";
-import { importerFor, salePrice } from "@/lib/market";
+import { importerFor, shortName, salePrice } from "@/lib/market";
 import { Button, Card, CardHeader, Empty, LinkButton, PageHeader, Table } from "@/components/ui";
 
 function Choice({ on, onClick, title, sub }: { on: boolean; onClick: () => void; title: string; sub: string }) {
@@ -55,7 +55,7 @@ export default function MarketCart() {
     <>
       <PageHeader
         title="Review your order"
-        sub={farms.length ? `From ${farms.join(", ")} · sold and delivered by ${importer.name}` : `Sold and delivered by ${importer.name}`}
+        sub={farms.length ? `From ${farms.join(", ")} · sold and delivered by ${shortName(importer)}` : `Sold and delivered by ${shortName(importer)}`}
         actions={<LinkButton variant="secondary" href="/f/market">Keep shopping</LinkButton>}
       />
       {!rows.length ? (
@@ -87,18 +87,18 @@ export default function MarketCart() {
               <div className="grid gap-3 p-4">
                 <div className="flex gap-3 rounded-xl bg-surface-2 p-3 text-sm">
                   <Truck size={18} className="mt-0.5 shrink-0 text-brand" />
-                  <p><b>{importer.name} handles it.</b> They add your boxes to their {origins} → MIA flight on {date(ship.toISOString())}, clear customs and deliver. Freight is already in the price.</p>
+                  <p><b>{shortName(importer)} handles it.</b> They add your boxes to their {origins} → MIA flight on {date(ship.toISOString())}, clear customs and deliver. Freight is already in the price.</p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <Choice on={delivery === "shop"} onClick={() => setDelivery("shop")} title="Deliver to my shop" sub={`${date(arrive.toISOString())} · with ${importer.name}'s route`} />
-                  <Choice on={delivery === "pickup"} onClick={() => setDelivery("pickup")} title={`I'll pick up at ${importer.name}`} sub={`From ${date(arrive.toISOString())} after customs`} />
+                  <Choice on={delivery === "shop"} onClick={() => setDelivery("shop")} title="Deliver to my shop" sub={`${date(arrive.toISOString())} · with ${shortName(importer)}'s route`} />
+                  <Choice on={delivery === "pickup"} onClick={() => setDelivery("pickup")} title={`I'll pick up at ${shortName(importer)}`} sub={`From ${date(arrive.toISOString())} after customs`} />
                 </div>
               </div>
             </Card>
             <Card>
               <CardHeader title="Payment" />
               <div className="grid gap-3 p-4 sm:grid-cols-2">
-                <Choice on={payment === "account"} onClick={() => setPayment("account")} title={`My ${importer.name} account`} sub={`${customer.terms ?? "Net 15"} · invoiced for what the farm confirms`} />
+                <Choice on={payment === "account"} onClick={() => setPayment("account")} title={`My ${shortName(importer)} account`} sub={`${customer.terms ?? "Net 15"} · invoiced for what the farm confirms`} />
                 <Choice on={payment === "card"} onClick={() => setPayment("card")} title="Card ending 4242" sub="Charged only after the farm confirms" />
               </div>
             </Card>
@@ -117,7 +117,7 @@ export default function MarketCart() {
             <Card className="bg-brand-soft/40 p-4">
               <h3 className="text-sm font-semibold">What happens next</h3>
               <ol className="mt-3 grid gap-3 text-sm">
-                {[`${farms.join(" and ")} ${farms.length > 1 ? "get" : "gets"} a notification right away.`, `They confirm or adjust each line within 4 hours, and ${importer.name} gets the purchase order.`, `${importer.name} ships your boxes with their flight and delivers to your shop.`].map((t, i) => (
+                {[`${farms.join(" and ")} ${farms.length > 1 ? "get" : "gets"} a notification right away.`, `They confirm or adjust each line within 4 hours, and ${shortName(importer)} gets the purchase order.`, `${shortName(importer)} ships your boxes with their flight and delivers to your shop.`].map((t, i) => (
                   <li key={i} className="flex gap-3"><span className="grid size-6 shrink-0 place-items-center rounded-full bg-brand text-xs font-semibold text-brand-fg">{i + 1}</span>{t}</li>
                 ))}
               </ol>

@@ -55,7 +55,7 @@ export default function FloristDashboard() {
       <PageHeader title="Dashboard" sub="Mari Flowers · florist shop" actions={<><LinkButton variant="secondary" href="/f/receive">Receive boxes</LinkButton><LinkButton href="/f/pos">Open POS</LinkButton></>} />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Sales today" value={money(todays.reduce((a, x) => a + x.totalCents, 0))} sub={`${todays.length} tickets`} />
-        <Stat label="Boxes to receive" value={incoming.length} sub={incoming.length ? "Delivered by Lucy's Flowers" : "All caught up"} />
+        <Stat label="Boxes to receive" value={incoming.length} sub={incoming.length ? "Delivered by International Trading and Services (ITS)" : "All caught up"} />
         <Stat label="New web orders" value={newWeb.length} sub={`${s.onlineOrders.filter((o) => o.orgId === orgId && o.status !== "delivered").length} not delivered`} />
         <Stat label="Open cash drawers" value={openShifts.length} sub={openShifts.map((x) => s.users.find((u) => u.id === x.cashierId)?.name.split(" ")[0]).join(", ") || "None"} />
       </div>

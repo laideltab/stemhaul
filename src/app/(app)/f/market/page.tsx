@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { cn, perStem } from "@/lib/format";
-import { importerFor, mapFarmsFor } from "@/lib/market";
+import { importerFor, mapFarmsFor, shortName } from "@/lib/market";
 import { FarmMap } from "@/components/farm-map";
 import { Badge, Card, Empty, inputCls, LinkButton, PageHeader } from "@/components/ui";
 
@@ -38,7 +38,7 @@ export default function FarmMarketplace() {
     <>
       <PageHeader
         title="Farm Marketplace"
-        sub={`Pick the farm, ${importer.name} imports and delivers · Ecuador, Colombia and Peru`}
+        sub={`Pick the farm, ${shortName(importer)} imports and delivers · Ecuador, Colombia and Peru`}
         actions={
           <>
             <LinkButton variant="secondary" href="/f/market/orders">My farm orders</LinkButton>
@@ -73,7 +73,7 @@ export default function FarmMarketplace() {
               <div className="mt-2 flex flex-wrap gap-1">{selected.species.map((x) => <Badge key={x}>{x}</Badge>)}</div>
               <dl className="mt-3 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-sm">
                 <dt className="text-muted">Delivered from</dt><dd className="font-semibold tabular-nums">{perStem(selected.fromCents)} / stem</dd>
-                <dt className="text-muted">Sold and delivered by</dt><dd>{importer.name}</dd>
+                <dt className="text-muted">Sold and delivered by</dt><dd>{shortName(importer)}</dd>
                 <dt className="text-muted">Confirms orders</dt><dd>within 4 h</dd>
               </dl>
               <LinkButton className="mt-3 w-full" href={`/f/market/farm/${selected.farm.id}`}>Shop this farm</LinkButton>
@@ -87,7 +87,7 @@ export default function FarmMarketplace() {
 
         <Card>
           <div className="flex items-baseline justify-between border-b border-line px-4 py-3">
-            <h2 className="font-display text-base font-semibold">{farms.length} farms from {importer.name}</h2>
+            <h2 className="font-display text-base font-semibold">{farms.length} farms from {shortName(importer)}</h2>
             <span className="text-xs text-muted">Delivered prices</span>
           </div>
           <div className="grid gap-2 p-3">

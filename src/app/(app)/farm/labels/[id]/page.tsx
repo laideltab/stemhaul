@@ -23,7 +23,7 @@ export default function Labels({ params }: { params: Promise<{ id: string }> }) 
       <div className="no-print">
         <PageHeader
           title={`Labels · ${po.number}`}
-          sub="4x6 in thermal labels, one per box. The barcode is what Lucy's scans in Miami and the florist scans at the shop."
+          sub="4x6 in thermal labels, one per box. The barcode is what ITS scans in Miami and the florist scans at the shop."
           actions={<><LinkButton variant="secondary" href="/farm">Back</LinkButton>{process.env.NEXT_PUBLIC_STATIC_DEMO !== "1" && <Button onClick={() => window.print()}><Printer size={16} /> Print</Button>}</>}
         />
       </div>
