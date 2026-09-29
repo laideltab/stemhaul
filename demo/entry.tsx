@@ -20,6 +20,9 @@ import MarketFarm from "@/app/(app)/f/market/farm/[id]/page";
 import MarketCart from "@/app/(app)/f/market/cart/page";
 import MarketOrders from "@/app/(app)/f/market/orders/page";
 import MarketOrder from "@/app/(app)/f/market/orders/[id]/page";
+import FPrebooks from "@/app/(app)/f/prebooks/page";
+import NewPrebook from "@/app/(app)/f/prebooks/new/page";
+import WPrebooks from "@/app/(app)/w/prebooks/page";
 import FarmMapOrders from "@/app/(app)/farm/map-orders/page";
 import FarmListings from "@/app/(app)/farm/listings/page";
 import F from "@/app/(app)/f/page";
@@ -51,6 +54,9 @@ const routes: [RegExp, Page, boolean, string?][] = [
   [/^\/w\/deliveries$/, Deliveries as Page, true],
   [/^\/w\/accounts$/, Accounts as Page, true],
   [/^\/w\/marketplace$/, WMarket as Page, true],
+  [/^\/w\/prebooks$/, WPrebooks as Page, true],
+  [/^\/f\/prebooks$/, FPrebooks as Page, true],
+  [/^\/f\/prebooks\/new$/, NewPrebook as Page, true],
   [/^\/f\/market$/, Market as Page, true],
   [/^\/f\/market\/farm\/([^/]+)$/, MarketFarm as Page, true, "id"],
   [/^\/f\/market\/cart$/, MarketCart as Page, true],

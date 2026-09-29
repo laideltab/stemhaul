@@ -1,5 +1,5 @@
 import type {
-  Bill, Box, BoxType, CartItem, Contact, Invoice, InvoicePayment, Listing, MapFarm, MarketOrder, MasterAWB, OnlineOrder,
+  Bill, Box, BoxType, CartItem, Contact, Prebook, Invoice, InvoicePayment, Listing, MapFarm, MarketOrder, MasterAWB, OnlineOrder,
   Org, Product, PurchaseOrder, QBBatch, Receipt, Sale, SaleItem, Shift, StockMovement, User,
 } from "./types";
 import { salePrice } from "./market";
@@ -25,6 +25,7 @@ export interface Data {
   mapFarms: MapFarm[];
   marketOrders: MarketOrder[];
   cart: CartItem[];
+  prebooks: Prebook[];
   counters: Record<string, number>;
 }
 
@@ -56,6 +57,16 @@ const addDays = (iso: string, n: number) => {
 export const LUCYS = "org_lucys";
 export const MARI = "org_mari";
 export const ESPERANZA = "org_esperanza";
+
+export const BOX_STEMS: Record<BoxType, Record<string, number>> = {
+  FB: { "Spray Rose": 400, Pompon: 300, Limonium: 200, Rose: 500, Carnation: 500, Alstroemeria: 300, Hydrangea: 60, Gypsophila: 200, Eucalyptus: 200, "Wax Flower": 200 },
+  HB: { "Spray Rose": 200, Pompon: 150, Limonium: 100, Rose: 250, Carnation: 250, Alstroemeria: 150, Hydrangea: 30, Gypsophila: 100, Eucalyptus: 100, "Wax Flower": 100 },
+  QB: { "Spray Rose": 100, Pompon: 75, Limonium: 50, Rose: 100, Carnation: 125, Alstroemeria: 80, Hydrangea: 15, Gypsophila: 50, Eucalyptus: 50, "Wax Flower": 50 },
+  EB: { "Spray Rose": 50, Pompon: 40, Limonium: 25, Rose: 50, Carnation: 60, Alstroemeria: 40, Hydrangea: 8, Gypsophila: 25, Eucalyptus: 25, "Wax Flower": 25 },
+};
+
+/** Stems a box of this species holds (half box of roses = 250). */
+export const stemsPerBox = (species: string, bt: BoxType) => BOX_STEMS[bt][species] ?? 100;
 
 export function buildSeed(): Data {
   const r = rng(42);
@@ -141,13 +152,7 @@ export function buildSeed(): Data {
   ];
 
   // ---------------- Wholesale: POs, boxes, AWBs, invoices ----------------
-  const cap: Record<BoxType, Record<string, number>> = {
-    FB: { "Spray Rose": 400, Pompon: 300, Limonium: 200, Rose: 500, Carnation: 500, Alstroemeria: 300, Hydrangea: 60, Gypsophila: 200, Eucalyptus: 200, "Wax Flower": 200 },
-    HB: { "Spray Rose": 200, Pompon: 150, Limonium: 100, Rose: 250, Carnation: 250, Alstroemeria: 150, Hydrangea: 30, Gypsophila: 100, Eucalyptus: 100, "Wax Flower": 100 },
-    QB: { "Spray Rose": 100, Pompon: 75, Limonium: 50, Rose: 100, Carnation: 125, Alstroemeria: 80, Hydrangea: 15, Gypsophila: 50, Eucalyptus: 50, "Wax Flower": 50 },
-    EB: { "Spray Rose": 50, Pompon: 40, Limonium: 25, Rose: 50, Carnation: 60, Alstroemeria: 40, Hydrangea: 8, Gypsophila: 25, Eucalyptus: 25, "Wax Flower": 25 },
-  };
-  const stemsFor = (productId: string, bt: BoxType) => cap[bt][products.find((p) => p.id === productId)!.species];
+  const stemsFor = (productId: string, bt: BoxType) => stemsPerBox(products.find((p) => p.id === productId)!.species, bt);
 
   type Spec = [string, BoxType, number, number, string?, number?]; // product, box, boxes, cents/stem, customer, confirmed
   const awbPlan: Record<string, { origin: string; ship: number; status: MasterAWB["status"] }> = {
@@ -493,9 +498,30 @@ export function buildSeed(): Data {
     marketOrders.push(mo);
   }
 
+  // ---------------- Prebooks (florist asks ITS, no farm picked) ----------------
+  const prebooks: Prebook[] = [
+    {
+      id: "pb_2039", number: "PB-2039", wholesalerId: LUCYS, floristOrgId: MARI, customerId: "c_mari", createdAt: at(-3, 16, 20), neededBy: day(6),
+      note: "For the weekend weddings.", weekly: false, status: "confirmed", answeredAt: at(-3, 17, 5), answerNote: "Finca La Esperanza has Pink Floyd; it is already on our UIO AWB.",
+      lines: [{ species: "Rose", color: "Pink", lengthCm: 60, boxType: "QB", boxes: 4, targetCents: 70, source: "farm", farmId: ESPERANZA, sourcedProductId: "p_pinkfloyd60", confirmedBoxes: 4, priceCents: 72, farmCents: 45, poId: "po_1047" }],
+    },
+    {
+      id: "pb_2041", number: "PB-2041", wholesalerId: LUCYS, floristOrgId: "org_bloom", customerId: "c_bloom", createdAt: minutesAgo(50), neededBy: day(4),
+      note: "Any red is fine, we need volume.", weekly: true, status: "requested",
+      lines: [
+        { species: "Rose", color: "Red", lengthCm: 50, boxType: "HB", boxes: 10, targetCents: 45 },
+        { species: "Hydrangea", color: "White", boxType: "HB", boxes: 2 },
+      ],
+    },
+  ];
+  // The PO that PB-2039 created carries the agreed price.
+  const pb39 = pos.find((p) => p.id === "po_1047")!;
+  pb39.prebookId = "pb_2039";
+  pb39.lines[1].salePriceCents = 72;
+
   return {
     orgs, users, products, contacts, pos, boxes, awbs, invoices, bills,
-    movements, receipts, saleItems, sales, shifts, onlineOrders, qb, listings, mapFarms, marketOrders, cart: [],
-    counters: { mk: 10480, po: poN, box: boxN, lot, awb: awbs.length, hawb: hawbN, inv: invN, pay: payN, sale: saleN, shift: shN, mv: mvN, web: 1023, bill: billN },
+    movements, receipts, saleItems, sales, shifts, onlineOrders, qb, listings, mapFarms, marketOrders, cart: [], prebooks,
+    counters: { pb: 2041, mk: 10480, po: poN, box: boxN, lot, awb: awbs.length, hawb: hawbN, inv: invN, pay: payN, sale: saleN, shift: shN, mv: mvN, web: 1023, bill: billN },
   };
 }

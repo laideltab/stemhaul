@@ -2,8 +2,8 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { buildSeed, type Data } from "./seed";
-import type { Box, InvoicePayment, Listing, MapFarm, MarketOrder, OnlineOrder, Payment, POLine, QBBatch, Receipt, Sale } from "./types";
+import { buildSeed, stemsPerBox, type Data } from "./seed";
+import type { Box, InvoicePayment, Listing, MapFarm, MarketOrder, OnlineOrder, Org, Payment, POLine, Prebook, PrebookLine, PurchaseOrder, QBBatch, Receipt, Sale } from "./types";
 import { importerFor, salePrice } from "./market";
 import { stockByProduct } from "./selectors";
 
@@ -55,6 +55,12 @@ interface Actions {
   farmDeclineMarketOrder: (orderId: string) => void;
   updateListing: (listingId: string, patch: Partial<Pick<Listing, "farmPriceCents" | "stockBoxes" | "listed">>) => void;
   setMapFarm: (farmId: string, patch: Partial<Pick<MapFarm, "markupPct" | "enabled">>) => void;
+
+  createPrebook: (input: Pick<Prebook, "neededBy" | "note" | "weekly" | "lines">) => string | undefined;
+  repeatPrebook: (prebookId: string) => string | undefined;
+  confirmPrebook: (prebookId: string, lines: PrebookLine[], note: string) => Result;
+  declinePrebook: (prebookId: string, note: string) => void;
+  addVendorFarm: (farm: { name: string; city: string; country: string; origin: string; code: string }) => string;
 
   floristScanBox: (code: string) => Result;
   receiveManual: (supplier: string, lines: Receipt["lines"]) => void;
@@ -340,6 +346,101 @@ export const useStore = create<Store>()(
         setMapFarm: (farmId, patch) =>
           set((st) => ({ mapFarms: st.mapFarms.map((m) => (m.wholesalerId === me().orgId && m.farmId === farmId ? { ...m, ...patch } : m)) })),
 
+        createPrebook: (input) => {
+          const s = get();
+          const floristOrgId = me().orgId;
+          const { customer, importer } = importerFor(s, floristOrgId);
+          const lines = input.lines.filter((l) => l.boxes > 0);
+          if (!customer || !importer || !lines.length) return;
+          const n = next("pb");
+          const id = `pb_${n}`;
+          set((st) => ({
+            prebooks: [{ id, number: `PB-${n}`, wholesalerId: importer.id, floristOrgId, customerId: customer.id, createdAt: now(), neededBy: input.neededBy, note: input.note, weekly: input.weekly, status: "requested", lines }, ...st.prebooks],
+          }));
+          return id;
+        },
+        repeatPrebook: (prebookId) => {
+          const pb = get().prebooks.find((x) => x.id === prebookId);
+          if (!pb) return;
+          const d = new Date(`${pb.neededBy}T12:00:00`);
+          d.setDate(d.getDate() + 7);
+          const soonest = new Date(Date.now() + 2 * 86400000);
+          const neededBy = (d < soonest ? soonest : d).toISOString().slice(0, 10);
+          const lines = pb.lines.map((l) => ({ species: l.species, color: l.color, lengthCm: l.lengthCm, productId: l.productId, boxType: l.boxType, boxes: l.boxes, targetCents: l.targetCents }));
+          return get().createPrebook({ neededBy, note: pb.note, weekly: pb.weekly, lines });
+        },
+        confirmPrebook: (prebookId, answers, note) => {
+          const s = get();
+          const pb = s.prebooks.find((x) => x.id === prebookId);
+          if (!pb || pb.status !== "requested") return { ok: false, message: "This prebook was already answered." };
+          const lines = answers.map((l) => (l.confirmedBoxes ? l : { ...l, confirmedBoxes: 0 }));
+          const used = lines.filter((l) => l.confirmedBoxes);
+          if (!used.length) return { ok: false, message: "Confirm at least one box, or use Can't source." };
+          for (const l of used) {
+            if (!l.sourcedProductId) return { ok: false, message: `Pick the variety for ${l.species}.` };
+            if (!l.priceCents) return { ok: false, message: `Set the price per stem for ${l.species}.` };
+            if (l.source === "farm" && !l.farmId) return { ok: false, message: `Pick the farm for ${l.species}.` };
+          }
+          // Stock lines take boxes already in the Miami cooler that nobody has bought.
+          const takeBoxes: Record<string, { ids: string[]; price: number }> = {};
+          const taken = new Set<string>();
+          for (const [i, l] of lines.entries()) {
+            if (l.source !== "stock" || !l.confirmedBoxes) continue;
+            const free = s.boxes.filter(
+              (b) => b.status === "received" && !b.customerId && !taken.has(b.id) && b.productId === l.sourcedProductId && b.boxType === l.boxType && s.pos.find((p) => p.id === b.poId)?.wholesalerId === pb.wholesalerId,
+            );
+            if (free.length < l.confirmedBoxes) return { ok: false, message: `Only ${free.length} ${l.boxType} of that variety in stock.` };
+            const ids = free.slice(0, l.confirmedBoxes).map((b) => b.id);
+            ids.forEach((b) => taken.add(b));
+            takeBoxes[i] = { ids, price: l.priceCents! };
+          }
+          // Farm lines become one purchase order per farm, already confirmed and with the florist on every line.
+          const at = now();
+          const ship = new Date(`${pb.neededBy}T12:00:00`);
+          ship.setDate(ship.getDate() - 3);
+          const tomorrow = new Date(Date.now() + 86400000);
+          const shipDate = (ship < tomorrow ? tomorrow : ship).toISOString().slice(0, 10);
+          const newPos: PurchaseOrder[] = [];
+          const byFarm = new Map<string, number[]>();
+          lines.forEach((l, i) => l.source === "farm" && l.confirmedBoxes && byFarm.set(l.farmId!, [...(byFarm.get(l.farmId!) ?? []), i]));
+          const poOf: Record<number, string> = {};
+          for (const [farmId, idx] of byFarm) {
+            const n = next("po");
+            const id = `po_${n}`;
+            newPos.push({
+              id, number: `PO-${n}`, wholesalerId: pb.wholesalerId, farmId, shipDate, status: "confirmed", createdAt: at, prebookId: pb.id,
+              lines: idx.map((i) => {
+                const l = lines[i];
+                const p = s.products.find((x) => x.id === l.sourcedProductId)!;
+                return { productId: p.id, boxType: l.boxType, boxes: l.confirmedBoxes!, stemsPerBox: stemsPerBox(p.species, l.boxType), pricePerStemCents: l.farmCents ?? 0, salePriceCents: l.priceCents, customerId: pb.customerId, confirmedBoxes: l.confirmedBoxes };
+              }),
+            });
+            idx.forEach((i) => (poOf[i] = id));
+          }
+          const done = lines.map((l, i) => ({ ...l, poId: poOf[i], boxIds: takeBoxes[i]?.ids }));
+          set((st) => ({
+            pos: [...newPos, ...st.pos],
+            boxes: st.boxes.map((b) => (taken.has(b.id) ? { ...b, customerId: pb.customerId, salePriceCents: Object.values(takeBoxes).find((t) => t.ids.includes(b.id))!.price } : b)),
+            prebooks: st.prebooks.map((x) => (x.id === pb.id ? { ...x, lines: done, status: "confirmed", answeredAt: at, answerNote: note || undefined } : x)),
+          }));
+          const parts = [newPos.length ? `${newPos.map((p) => p.number).join(", ")} created` : "", taken.size ? `${taken.size} box${taken.size > 1 ? "es" : ""} from Miami stock set aside` : ""].filter(Boolean);
+          return { ok: true, message: `${pb.number} confirmed. ${parts.join(" and ")}.` };
+        },
+        declinePrebook: (prebookId, note) =>
+          set((st) => ({
+            prebooks: st.prebooks.map((x) => (x.id === prebookId && x.status === "requested" ? { ...x, status: "declined", answeredAt: now(), answerNote: note || undefined, lines: x.lines.map((l) => ({ ...l, confirmedBoxes: 0 })) } : x)),
+          })),
+        addVendorFarm: (f) => {
+          const n = next("org");
+          const id = `org_farm${n}`;
+          const org: Org = { id, name: f.name, kind: "farm", city: f.city, code: f.code.toUpperCase().slice(0, 6), origin: f.origin, modules: [], plan: "Farm (free)", billing: "trial", since: today() };
+          set((st) => ({
+            orgs: [...st.orgs, org],
+            contacts: [...st.contacts, { id: `c_farm${n}`, ownerOrgId: me().orgId, kind: "farm", name: f.name, country: f.country, linkedOrgId: id, terms: "Net 15" }],
+          }));
+          return id;
+        },
+
         floristScanBox: (code) => {
           const s = get();
           const orgId = me().orgId;
@@ -480,6 +581,6 @@ export const useStore = create<Store>()(
         },
       };
     },
-    { name: "stemhaul-demo-v4" },
+    { name: "stemhaul-demo-v5" },
   ),
 );

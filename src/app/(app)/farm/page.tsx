@@ -32,7 +32,7 @@ export default function FarmPortal() {
             <Card key={p.id}>
               <CardHeader
                 title={<span className="flex items-center gap-2">{p.number} <Status value={p.status} /></span>}
-                sub={`${buyer.name}${p.marketOrderId ? ` · map order ${s.marketOrders.find((m) => m.id === p.marketOrderId)?.number}` : ""} · ship ${date(p.shipDate)} · ${boxes} boxes ordered · ${money(p.lines.reduce((a, l) => a + l.boxes * l.stemsPerBox * l.pricePerStemCents, 0))}`}
+                sub={`${buyer.name}${p.marketOrderId ? ` · map order ${s.marketOrders.find((m) => m.id === p.marketOrderId)?.number}` : ""}${p.prebookId ? " · prebook" : ""} · ship ${date(p.shipDate)} · ${boxes} boxes ordered · ${money(p.lines.reduce((a, l) => a + l.boxes * l.stemsPerBox * l.pricePerStemCents, 0))}`}
                 action={
                   <div className="flex gap-2">
                     {p.status === "sent" && <Button onClick={() => s.farmConfirmPO(p.id, p.lines.map((l, i) => conf[`${p.id}:${i}`] ?? l.boxes))}>Confirm order</Button>}

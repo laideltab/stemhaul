@@ -92,6 +92,8 @@ export interface PurchaseOrder {
   createdAt: string;
   /** Set when a florist's marketplace order created this PO. */
   marketOrderId?: string;
+  /** Prebook this PO was created from. */
+  prebookId?: string;
 }
 
 export type BoxStatus = "labeled" | "in_transit" | "received" | "delivered" | "missing" | "damaged";
@@ -115,6 +117,8 @@ export interface Box {
   invoiceId?: string;
   /** Set when a licensed florist has scanned it in. */
   floristReceivedAt?: string;
+  /** Price per stem already agreed with the customer (marketplace or prebook). */
+  salePriceCents?: number;
 }
 
 export interface MasterAWB {
@@ -221,6 +225,50 @@ export interface MarketOrder {
 export interface CartItem {
   listingId: string;
   boxes: number;
+}
+
+// ---- Prebooks ----
+// A florist asks its importer for flowers without picking a farm; the importer sources them
+// (a farm on Stem Haul, a farm outside it, or its own Miami stock) and confirms quantity and price.
+
+export interface PrebookLine {
+  species: string;
+  /** Empty means any color, length or variety. */
+  color?: string;
+  lengthCm?: number;
+  productId?: string;
+  boxType: BoxType;
+  boxes: number;
+  targetCents?: number;
+  // Filled in by the importer.
+  source?: "farm" | "stock";
+  farmId?: string;
+  /** Variety the importer picked. */
+  sourcedProductId?: string;
+  confirmedBoxes?: number;
+  /** Sale price per stem to the florist. */
+  priceCents?: number;
+  /** What the farm charges per stem (farm lines). */
+  farmCents?: number;
+  poId?: string;
+  /** Boxes set aside from Miami stock (stock lines). */
+  boxIds?: string[];
+}
+
+export interface Prebook {
+  id: string;
+  number: string;
+  wholesalerId: string;
+  floristOrgId: string;
+  customerId: string;
+  createdAt: string;
+  neededBy: string;
+  note?: string;
+  weekly: boolean;
+  status: "requested" | "confirmed" | "declined";
+  answeredAt?: string;
+  answerNote?: string;
+  lines: PrebookLine[];
 }
 
 // ---- Florist module ----

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import {
-  Banknote, Bell, Boxes, ClipboardList, Flower2, Gauge, Globe, LayoutGrid, ListChecks, LogOut, Map as MapIcon, Menu, PackageCheck,
+  Banknote, Bell, Boxes, CalendarClock, Inbox, ClipboardList, Flower2, Gauge, Globe, LayoutGrid, ListChecks, LogOut, Map as MapIcon, Menu, PackageCheck,
   Plane, RefreshCw, ScanLine, ShieldCheck, ShoppingBasket, ShoppingCart, Tag, Truck, Users, Wallet, X,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
@@ -23,6 +23,7 @@ const I = (C: typeof Gauge) => <C size={17} strokeWidth={1.8} />;
 const wholesaleNav: NavItem[] = [
   { href: "/w", label: "Dashboard", icon: I(Gauge) },
   { href: "/w/marketplace", label: "Farm Marketplace", icon: I(MapIcon) },
+  { href: "/w/prebooks", label: "Prebooks", icon: I(Inbox) },
   { href: "/w/purchase-orders", label: "Purchase Orders", icon: I(ClipboardList) },
   { href: "/w/freight", label: "Freight & AWBs", icon: I(Plane) },
   { href: "/w/receiving", label: "Scan Receiving", icon: I(ScanLine) },
@@ -41,6 +42,7 @@ const floristNav: NavItem[] = [
 const marketNav: NavItem[] = [
   { href: "/f/market", label: "Farm Marketplace", icon: I(MapIcon) },
   { href: "/f/market/orders", label: "My Farm Orders", icon: I(ListChecks) },
+  { href: "/f/prebooks", label: "Prebooks", icon: I(CalendarClock) },
   { href: "/f/market/cart", label: "Cart", icon: I(ShoppingBasket) },
 ];
 const farmNav: NavItem[] = [
@@ -63,6 +65,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const resetDemo = useStore((s) => s.resetDemo);
   const cart = useStore((s) => s.cart);
   const marketOrders = useStore((s) => s.marketOrders);
+  const prebooks = useStore((s) => s.prebooks);
   const router = useRouter();
   const path = usePathname();
   const [open, setOpen] = useState(false);
@@ -96,6 +99,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     "/f/market/orders": marketOrders.filter((o) => o.floristOrgId === session.orgId && o.status === "pending").length,
     "/farm/map-orders": marketOrders.filter((o) => o.farmId === session.orgId && o.status === "pending").length,
     "/w/marketplace": marketOrders.filter((o) => o.wholesalerId === session.orgId && o.status === "pending").length,
+    "/w/prebooks": prebooks.filter((p) => p.wholesalerId === session.orgId && p.status === "requested").length,
+    "/f/prebooks": prebooks.filter((p) => p.floristOrgId === session.orgId && p.status === "requested").length,
   };
 
   const sidebar = (
