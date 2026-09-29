@@ -244,6 +244,7 @@ export function buildSeed(): Data {
           costPerStemCents: l.pricePerStemCents,
           status: spec.status === "labeled" ? "labeled" : spec.status === "shipped" ? "in_transit" : "received",
           hawb, awbId, lot: ++lot, customerId: l.customerId,
+          receivedAt: spec.status === "received" ? at(spec.ship + 1, 6, 10 + (boxN % 40)) : undefined,
         });
       }
     });
@@ -269,6 +270,7 @@ export function buildSeed(): Data {
       inv.lines.push({ boxId: b.id, description: `${b.boxType} ${pname(b.productId)}`, stems: b.stems, pricePerStemCents: price });
       b.status = "delivered";
       b.invoiceId = inv.id;
+      b.deliveredAt = at(dayOffset, 7, 30);
     }
     inv.totalCents = inv.lines.reduce((s, l) => s + l.stems * l.pricePerStemCents, 0);
     if (paidRatio > 0) {

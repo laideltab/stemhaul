@@ -120,6 +120,10 @@ export interface Box {
   invoiceId?: string;
   /** Set when a licensed florist has scanned it in. */
   floristReceivedAt?: string;
+  /** Scanned in at the importer's Miami warehouse. */
+  receivedAt?: string;
+  /** Delivered to the customer (invoice created). */
+  deliveredAt?: string;
   /** Price per stem already agreed with the customer (marketplace or prebook). */
   salePriceCents?: number;
 }

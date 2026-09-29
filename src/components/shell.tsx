@@ -10,6 +10,7 @@ import {
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/format";
 import { LOGO_ICON, LOGO_MARK } from "@/lib/brand";
+import { Assistant } from "./assistant";
 
 const noop = () => () => {};
 /** False during server render and the first client pass, so persisted demo data never causes a hydration mismatch. */
@@ -183,6 +184,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
       </div>
+      <Assistant />
     </div>
   );
 }

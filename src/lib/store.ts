@@ -259,7 +259,7 @@ export const useStore = create<Store>()(
           if (box.status === "received" || box.status === "delivered") return { ok: false, message: `${box.code} was already scanned.` };
           if (box.status === "labeled") return { ok: false, message: `${box.code} is not on a closed AWB yet.` };
           set((st) => {
-            const boxes = st.boxes.map((b) => (b.id === box.id ? { ...b, status: "received" as const } : b));
+            const boxes = st.boxes.map((b) => (b.id === box.id ? { ...b, status: "received" as const, receivedAt: now() } : b));
             const poPending = boxes.some((b) => b.poId === box.poId && b.status === "in_transit");
             const awbPending = boxes.some((b) => b.awbId === box.awbId && b.status === "in_transit");
             return {
@@ -289,7 +289,7 @@ export const useStore = create<Store>()(
               { id, number: `INV-${n}`, wholesalerId: me().orgId, customerId, date: today(), dueDate: due.toISOString().slice(0, 10), lines, totalCents: lines.reduce((a, l) => a + l.stems * l.pricePerStemCents, 0), paidCents: 0, payments: [] },
               ...st.invoices,
             ],
-            boxes: st.boxes.map((b) => (boxIds.includes(b.id) ? { ...b, status: "delivered", customerId, invoiceId: id } : b)),
+            boxes: st.boxes.map((b) => (boxIds.includes(b.id) ? { ...b, status: "delivered", customerId, invoiceId: id, deliveredAt: now() } : b)),
           }));
           return id;
         },
