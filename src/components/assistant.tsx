@@ -114,9 +114,10 @@ function AssistantPanel({ orgId, userId }: { orgId: string; userId: string }) {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-brand px-4 py-3 text-sm font-medium text-brand-fg shadow-lg hover:bg-brand/90"
+          aria-label="Ask Stella"
+          className="fixed bottom-4 right-4 z-40 flex size-12 items-center justify-center gap-2 rounded-full bg-brand text-sm font-medium text-brand-fg shadow-lg hover:bg-brand/90 sm:bottom-5 sm:right-5 sm:size-auto sm:px-4 sm:py-3"
         >
-          <MessageCircleQuestion size={18} /> Ask Stella
+          <MessageCircleQuestion size={20} /> <span className="hidden sm:inline">Ask Stella</span>
         </button>
       )}
       {open && (
