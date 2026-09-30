@@ -4,7 +4,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import type { AssistantData, BoxRow, OrderRow, ShipmentRow } from "./scope";
 
-type Tool = Anthropic.Beta.BetaTool;
+type Tool = Anthropic.Tool;
 
 const str = (desc: string) => ({ type: "string" as const, description: desc });
 

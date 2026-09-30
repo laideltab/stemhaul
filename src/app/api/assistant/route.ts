@@ -4,7 +4,8 @@ import { runTool, TOOLS } from "@/lib/assistant/tools";
 
 export const maxDuration = 60;
 
-const MODEL = "claude-opus-5-5";
+// Cheapest current model; plenty for looking up records and answering in a few sentences.
+const MODEL = "claude-haiku-4-5";
 const MAX_ROUNDS = 6;
 const MAX_QUESTION = 1000;
 const MAX_HISTORY = 12;
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
   if (!data?.viewer || history.at(-1)?.role !== "user") return Response.json({ error: "bad_request", message: "Bad request." }, { status: 400 });
   while (history[0]?.role === "assistant") history.shift();
 
-  const messages: Anthropic.Beta.BetaMessageParam[] = history.map((m) => ({ role: m.role, content: m.text.slice(0, MAX_QUESTION * 4) }));
+  const messages: Anthropic.MessageParam[] = history.map((m) => ({ role: m.role, content: m.text.slice(0, MAX_QUESTION * 4) }));
   const v = data.viewer;
   // Who is asking goes after the cache breakpoint, so the fixed instructions and tools stay cached for every account.
   const viewer = `Signed-in account: ${v.org} (${v.kind}). User: ${v.user}, role ${v.role}. Today is ${v.today}.`;
@@ -67,12 +68,9 @@ export async function POST(req: Request) {
       const send = (o: object) => controller.enqueue(enc.encode(JSON.stringify(o) + "\n"));
       try {
         for (let round = 0; round < MAX_ROUNDS; round++) {
-          const s = client.beta.messages.stream({
+          const s = client.messages.stream({
             model: MODEL,
             max_tokens: 4000,
-            betas: ["server-side-fallback-2026-07-01"],
-            fallbacks: "default",
-            output_config: { effort: "low" },
             system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }, { type: "text", text: viewer }],
             tools: TOOLS,
             messages,
@@ -85,7 +83,7 @@ export async function POST(req: Request) {
           }
           if (msg.stop_reason !== "tool_use") break;
           messages.push({ role: "assistant", content: msg.content });
-          const results: Anthropic.Beta.BetaToolResultBlockParam[] = [];
+          const results: Anthropic.ToolResultBlockParam[] = [];
           for (const b of msg.content) {
             if (b.type !== "tool_use") continue;
             send({ t: "tool", v: b.name });
