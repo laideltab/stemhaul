@@ -654,6 +654,6 @@ export const useStore = create<Store>()(
         },
       };
     },
-    { name: "stemhaul-demo-v7" },
+    { name: "stemhaul-demo-v8" },
   ),
 );

@@ -87,7 +87,7 @@ export function buildSeed(): Data {
   ];
 
   const users: User[] = [
-    { id: "u_lucy", orgId: LUCYS, name: "Lucy Ramírez", email: "lucy@itsmiami.com", role: "owner", active: true },
+    { id: "u_lucy", orgId: LUCYS, name: "Lucy Herrera", email: "lucy@itsmiami.com", role: "owner", active: true },
     { id: "u_carlos", orgId: LUCYS, name: "Carlos Mejía", email: "carlos@itsmiami.com", role: "purchasing", active: true },
     { id: "u_pedro", orgId: LUCYS, name: "Pedro Soto", email: "pedro@itsmiami.com", role: "warehouse", active: true },
     { id: "u_gloria", orgId: LUCYS, name: "Gloria Díaz", email: "gloria@itsmiami.com", role: "accountant", active: true },
