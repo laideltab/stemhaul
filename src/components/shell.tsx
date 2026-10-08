@@ -182,7 +182,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className="font-display font-semibold">Stem Haul</span>
           <span className="truncate text-sm text-muted">{isAdmin ? "License Admin" : org?.name}</span>
         </div>
-        {/* Bottom padding keeps the last buttons on a page clear of the floating Stella button. */}
+        {/* Bottom padding keeps the last buttons on a page clear of the floating Lux button. */}
         <main className="mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:px-8">{children}</main>
       </div>
       <Assistant />

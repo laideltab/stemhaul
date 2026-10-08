@@ -114,10 +114,10 @@ function AssistantPanel({ orgId, userId }: { orgId: string; userId: string }) {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          aria-label="Ask Stella"
+          aria-label="Ask Lux"
           className="fixed bottom-4 right-4 z-40 flex size-12 items-center justify-center gap-2 rounded-full bg-brand text-sm font-medium text-brand-fg shadow-lg hover:bg-brand/90 sm:bottom-5 sm:right-5 sm:size-auto sm:px-4 sm:py-3"
         >
-          <MessageCircleQuestion size={20} /> <span className="hidden sm:inline">Ask Stella</span>
+          <MessageCircleQuestion size={20} /> <span className="hidden sm:inline">Ask Lux</span>
         </button>
       )}
       {open && (
@@ -125,7 +125,7 @@ function AssistantPanel({ orgId, userId }: { orgId: string; userId: string }) {
           <div className="flex items-center gap-2 border-b border-line px-4 py-3">
             <MessageCircleQuestion size={18} className="text-brand" />
             <div className="min-w-0 flex-1">
-              <div className="font-display font-semibold leading-tight">Stella</div>
+              <div className="font-display font-semibold leading-tight">Lux</div>
               <div className="truncate text-xs text-muted">Answers from {org?.shortName ?? org?.name}&apos;s data only</div>
             </div>
             {msgs.length > 0 && (
